@@ -1,0 +1,11 @@
+# bus number
+N=2
+
+# bus capacity
+Q=5
+
+CUSTOMERS
+# x y a
+5 5 30
+8 2 40
+10 7 15
