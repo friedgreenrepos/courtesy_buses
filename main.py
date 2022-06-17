@@ -4,6 +4,9 @@ from math import sqrt
 from pathlib import Path
 import gurobipy
 from gurobipy import quicksum
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
 EPSILON = 1e-3
 
@@ -28,8 +31,48 @@ def abort(msg):
     exit(-1)
 
 def draw(model: 'CourtesyBusesModel', solution: 'CourtesyBusesSolution'):
-    # TODO
-    pass
+    bus_in_use = list(set([p[2] for p in solution.passages]))
+    colours = [(np.random.rand(),np.random.rand(),np.random.rand()) for _ in range(len(bus_in_use))]
+
+    # customers' lists of x and y coordinates
+    xc = [customer[0] for customer in model.customers]
+    yc = [customer[1] for customer in model.customers]
+
+    # customers' desired arrival times
+    ac = [customer[2] for customer in model.customers]
+    # extract nodes coordinates
+    coord = {0:(0,0)}
+    for i, (x,y) in enumerate(zip(xc,yc)):
+        coord[i+1] = (x,y)
+
+    # draw solution
+    plt.figure(figsize=(12,5))
+    # pub
+    plt.scatter(0,0, c='r', marker='D')
+    plt.text(0-0.5, 0, f"PUB")
+    # customers destinations
+    plt.scatter(xc,yc, c='g')
+    # customers' desidered arrival time
+    for i in range(len(model.customers)):
+        plt.text(xc[i],yc[i]+0.2, f"a_{i+1}={ac[i]}")
+
+    offset = 0.2
+
+    # routes
+    for p in solution.passages:
+        plt.plot([coord[p[0]][0],coord[p[1]][0]],[coord[p[0]][1],coord[p[1]][1]],color=colours[p[2]])
+    if p[0] == 0:
+        plt.text(coord[p[0]][0],coord[p[0]][1]+offset, f"bus{p[2]}| t_{p[0]}={p[3]:.1f}")
+        offset += 0.3
+    else:
+        plt.text(coord[p[0]][0],coord[p[0]][1]-0.2, f"t_{p[0]}={p[3]:.1f}")
+
+    patch = [mpatches.Patch(color=colours[n], label="bus" + str(bus_in_use[n])) for n in range(len(bus_in_use))]
+    plt.legend(handles=patch,loc="best")
+
+    plt.title("Solution")
+    #plt.savefig("solution.png")
+    plt.show()
 
 
 class CourtesyBusesSolution:
@@ -171,6 +214,7 @@ class CourtesyBusesModel:
         t = [[0] * len(V) for _ in V]
         c = [[0] * len(V) for _ in V]
 
+        # compute distance between edges (euclidean)
         for i in V:
             for j in V:
                 if i == j:
