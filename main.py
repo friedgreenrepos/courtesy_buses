@@ -31,8 +31,6 @@ def abort(msg):
     exit(-1)
 
 def draw(model: 'CourtesyBusesModel', solution: 'CourtesyBusesSolution'):
-    bus_in_use = list(set([p[2] for p in solution.passages]))
-    colours = [(np.random.rand(),np.random.rand(),np.random.rand()) for _ in range(len(bus_in_use))]
 
     # customers' lists of x and y coordinates
     xc = [customer[0] for customer in model.customers]
@@ -45,33 +43,32 @@ def draw(model: 'CourtesyBusesModel', solution: 'CourtesyBusesSolution'):
     for i, (x,y) in enumerate(zip(xc,yc)):
         coord[i+1] = (x,y)
 
-    # draw solution
-    plt.figure(figsize=(12,5))
-    # pub
-    plt.scatter(0,0, c='r', marker='D')
-    plt.text(0-0.5, 0, f"PUB")
-    # customers destinations
-    plt.scatter(xc,yc, c='g')
-    # customers' desidered arrival time
+    bus_in_use = list(set([p[2] for p in solution.passages]))
+    colours = [(np.random.rand(),np.random.rand(),np.random.rand()) for _ in range(len(bus_in_use))]
+
+    fig, ax = plt.subplots(1, 1)
+    ax.clear()
+    ax.set_title("Solution")
+    #pub
+    ax.plot(0,0, c='r', marker='D')
+    ax.annotate("PUB", (0-0.5,0))
+    #customers destinations
+    ax.scatter(xc, yc, c='g')
     for i in range(len(model.customers)):
-        plt.text(xc[i],yc[i]+0.2, f"a_{i+1}={ac[i]}")
+        plt.annotate(f"a_{i+1}={ac[i]}", (xc[i],yc[i]+0.2))
 
     offset = 0.2
-
-    # routes
     for p in solution.passages:
         plt.plot([coord[p[0]][0],coord[p[1]][0]],[coord[p[0]][1],coord[p[1]][1]],color=colours[p[2]])
-    if p[0] == 0:
-        plt.text(coord[p[0]][0],coord[p[0]][1]+offset, f"bus{p[2]}| t_{p[0]}={p[3]:.1f}")
-        offset += 0.3
-    else:
-        plt.text(coord[p[0]][0],coord[p[0]][1]-0.2, f"t_{p[0]}={p[3]:.1f}")
-
+        # if passage starts from PUB
+        if p[0] == 0:
+            plt.annotate(f"bus{p[2]}| t_{p[0]}={p[3]:.1f}", (coord[p[0]][0],coord[p[0]][1]+offset))
+            offset += 0.3
+        else:
+            plt.annotate(f"t_{p[0]}={p[3]:.1f}", (coord[p[0]][0],coord[p[0]][1]-0.2))
+    # bus legend
     patch = [mpatches.Patch(color=colours[n], label="bus" + str(bus_in_use[n])) for n in range(len(bus_in_use))]
-    plt.legend(handles=patch,loc="best")
-
-    plt.title("Solution")
-    #plt.savefig("solution.png")
+    ax.legend(handles=patch,loc="best")
     plt.show()
 
 
