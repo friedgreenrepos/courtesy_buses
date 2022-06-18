@@ -196,14 +196,6 @@ class CourtesyBusesModel:
 
         # edges
         A = [(i,j,k) for i in V for j in V for k in K if i!=j]
-        # old way
-        # A = []
-        # for i in V:
-        #     for j in V:
-        #         if i == j:
-        #             continue
-        #         for k in K:
-        #             A.append((i, j, k))
 
         # create edges manually
         #A = [(0,3,0),(3,1,0),(1,2,0),(2,0,0)]
