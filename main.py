@@ -132,6 +132,10 @@ class CourtesyBusesModel:
         self.N = None  # number of buses
         self.Q = None  # capacity of buses (number of people each bus can carry)
         self.customers = []
+        self.alpha = 1 # route cost parameter
+        self.beta = 1 # customer satisfaction parameter
+        self.omega = 1 # distance/time to cost parameter
+
 
     def parse(self, filename: str):
         def is_key_value(line: str, key: str):
@@ -144,6 +148,9 @@ class CourtesyBusesModel:
             with Path(filename).open() as f:
                 SECTION_HEADER = 0
                 SECTION_CUSTOMERS = 1
+                SECTION_ALPHA = 2
+                SECTION_BETA = 3
+                SECTION_OMEGA = 4
 
                 section = SECTION_HEADER
 
@@ -161,6 +168,18 @@ class CourtesyBusesModel:
                         section = SECTION_CUSTOMERS
                         continue
 
+                    if l == "ALPHA":
+                        section = SECTION_ALPHA
+                        continue
+
+                    if l == "BETA":
+                        section = SECTION_ALPHA
+                        continue
+
+                    if l == "OMEGA":
+                        section = SECTION_ALPHA
+                        continue
+
                     # header
                     if section == SECTION_HEADER:
                         if is_key_value(l, "N"):
@@ -174,6 +193,21 @@ class CourtesyBusesModel:
                     if section == SECTION_CUSTOMERS:
                         x, y, a, = l.split(" ")
                         self.customers.append((int(x), int(y), int(a)))
+                        continue
+
+                    # alpha
+                    if section == SECTION_ALPHA:
+                        self.alpha = l
+                        continue
+
+                    # beta
+                    if section == SECTION_BETA:
+                        self.beta = l
+                        continue
+
+                    # omega
+                    if section == SECTION_OMEGA:
+                        self.omega = l
                         continue
             return True
         except Exception as e:
@@ -214,8 +248,7 @@ class CourtesyBusesModel:
                 t[i][j] = dx
 
                 # TODO: introduce parameter/constant for time <-> cost conversion
-                omega = 1
-                c[i][j] = omega * t[i][j]
+                c[i][j] = self.omega * t[i][j]
                 print(f"t[{i}][{j}]={t[i][j]}")
 
         # arrival times
@@ -259,12 +292,12 @@ class CourtesyBusesModel:
                               for (i, j, kk) in A if k == kk and j != PUB) <= self.Q
                      for k in K), name="H1")
 
-        # H2: bring customers home only once
+        # H2: take all customers home and only once
         m.addConstrs((quicksum(X[(i, j, k)]
                               for k in K for (i, jj, kk) in A if k == kk and j == jj) == 1
                      for j in C), name="H2")
 
-        # H3: flow constraint
+        # H3: flow conservation
         m.addConstrs((quicksum(X[(i, h, k)] for (i, hh, kk) in A if h == hh and k == kk) -
                       quicksum(X[(h, j, k)] for (hh, j, kk) in A if h == hh and k == kk) == 0
                      for h in C for k in K), name="H3")
@@ -309,27 +342,13 @@ class CourtesyBusesModel:
                       for i in C for k in K),
                      name="H10")
 
-        # TODO: remove this since probably is not needed because of the addition of YY
-        # NOTE: trick here
-        # In order to assign a real arrival time to Z[i]
-        # we have to ensure that Y[i,k] == 0 for each bus k that does not
-        # visit customer i; in order to do so we have to ensure that Y remains
-        # as low as possible (i.e. == 0) if not involved in other hard constraints,
-        # and we do so by inserting it in the objective function
-        # epsilon = 0.001
-
-        alpha = 0
-        beta = 1
         m.setObjective(
                 # cost component
-                alpha * quicksum(c[i][j] * X[(i, j, k)] for (i, j, k) in A) +
+                self.alpha * quicksum(c[i][j] * X[(i, j, k)] for (i, j, k) in A) +
 
                 # customer satisfaction component
-                beta * quicksum(Z[i] - a[i] for i in C),
+                self.beta * quicksum(Z[i] - a[i] for i in C),
 
-                # TODO: remove this since probably is not needed because of the addition of YY
-                # minimization of Y (trick)
-                # epsilon * quicksum(Y[(i, k)] for i in V for k in K),
         gurobipy.GRB.MINIMIZE)
 
         # save LP
@@ -344,7 +363,6 @@ class CourtesyBusesModel:
             m.write("courtesy-buses.ilp")
             return None
 
-        # TODO
         solution = CourtesyBusesSolution(self)
 
         if verbose:
