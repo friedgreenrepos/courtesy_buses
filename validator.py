@@ -1,4 +1,4 @@
-import CourtesyBusesModel, CourtesyBusesSolution
+from main import CourtesyBusesModel, CourtesyBusesSolution
 import numpy as np
 
 class Validator:
@@ -32,7 +32,7 @@ class Validator:
 
     def get_act_arr_times(self):
         'Get z_i for i in customers (actual arrival time)'
-        return [round(p[3],2) for p in self.solution.passages if p[0]!= 0]
+        return [p[3] for p in self.solution.passages if p[0]!= 0]
 
     def get_buses_in_use(self):
         'Get buses in use in solution'
@@ -90,7 +90,7 @@ class Validator:
     def check_H5(self):
         'H5. Arrival time lower bound'
         a = self.get_des_arr_times()
-        z = self.get_act_arr_times()
+        z = [round(t,2) for t in self.get_act_arr_times()]
         for a_i, z_i in zip(a,z):
             assert z_i >= a_i
 
@@ -123,7 +123,6 @@ class Validator:
 
     # SOFT CONSTRAINTS
 
-
     def customer_satisfaction(self):
         '''
         Compute customer satisfaction cost:
@@ -150,5 +149,6 @@ class Validator:
             cost += dx.get((p[0],p[1]))
         return cost
 
-    def compute_total_cost():
+    def compute_total_cost(self):
+        'Compute objective function value'
         return self.trips_cost() + self.customer_satisfaction()
