@@ -15,20 +15,25 @@ verbose = False
 # pub node
 PUB = 0
 
+
 def node_to_string(v):
     return 'PUB' if v == 0 else f"({v})"
+
 
 def eprint(*args, **kwargs):
     if verbose:
         print(*args, **kwargs, file=sys.stderr)
 
+
 def vprint(*args, **kwargs):
     if verbose:
         print(*args, **kwargs)
 
+
 def abort(msg):
     print(f"ERROR: {msg}")
     exit(-1)
+
 
 def draw(model: 'CourtesyBusesModel', solution: 'CourtesyBusesSolution'):
 
@@ -39,36 +44,36 @@ def draw(model: 'CourtesyBusesModel', solution: 'CourtesyBusesSolution'):
     # customers' desired arrival times
     ac = [customer[2] for customer in model.customers]
     # extract nodes coordinates
-    coord = {0:(0,0)}
-    for i, (x,y) in enumerate(zip(xc,yc)):
-        coord[i+1] = (x,y)
+    coord = {0: (0, 0)}
+    for i, (x, y) in enumerate(zip(xc, yc)):
+        coord[i+1] = (x, y)
 
     bus_in_use = list(set([p[2] for p in solution.passages]))
-    colours = [(np.random.rand(),np.random.rand(),np.random.rand()) for _ in range(len(bus_in_use))]
+    colours = [(np.random.rand(), np.random.rand(), np.random.rand()) for _ in range(len(bus_in_use))]
 
     fig, ax = plt.subplots(1, 1)
     ax.clear()
     ax.set_title("Solution")
     #pub
-    ax.plot(0,0, c='r', marker='D')
-    ax.annotate("PUB", (0-0.5,0))
+    ax.plot(0, 0, c='r', marker='D')
+    ax.annotate("PUB", (0-0.5, 0))
     #customers destinations
     ax.scatter(xc, yc, c='g')
     for i in range(len(model.customers)):
-        plt.annotate(f"a_{i+1}={ac[i]}", (xc[i],yc[i]+0.2))
+        plt.annotate(f"a_{i+1}={ac[i]}", (xc[i], yc[i]+0.2))
 
     offset = 0.2
     for p in solution.passages:
-        plt.plot([coord[p[0]][0],coord[p[1]][0]],[coord[p[0]][1],coord[p[1]][1]],color=colours[p[2]])
+        plt.plot([coord[p[0]][0],coord[p[1]][0]], [coord[p[0]][1], coord[p[1]][1]], color=colours[p[2]])
         # if passage starts from PUB
         if p[0] == 0:
-            plt.annotate(f"bus{p[2]}| t_{p[0]}={p[3]:.1f}", (coord[p[0]][0],coord[p[0]][1]+offset))
+            plt.annotate(f"bus{p[2]}| t_{p[0]}={p[3]:.1f}", (coord[p[0]][0], coord[p[0]][1]+offset))
             offset += 0.3
         else:
-            plt.annotate(f"t_{p[0]}={p[3]:.1f}", (coord[p[0]][0],coord[p[0]][1]-0.2))
+            plt.annotate(f"t_{p[0]}={p[3]:.1f}", (coord[p[0]][0],coord[p[0]][1] - 0.2))
     # bus legend
     patch = [mpatches.Patch(color=colours[n], label="bus" + str(bus_in_use[n])) for n in range(len(bus_in_use))]
-    ax.legend(handles=patch,loc="best")
+    ax.legend(handles=patch, loc="best")
     plt.show()
 
 
@@ -127,15 +132,15 @@ class CourtesyBusesSolution:
             s += f"{p[0]} {p[1]} {p[2]} {p[3]:.1f}\n"
         return s
 
+
 class CourtesyBusesModel:
     def __init__(self):
         self.N = None  # number of buses
         self.Q = None  # capacity of buses (number of people each bus can carry)
         self.customers = []
-        self.alpha = 1 # route cost parameter
-        self.beta = 1 # customer satisfaction parameter
-        self.omega = 1 # distance/time to cost parameter
-
+        self.alpha = 1  # route cost parameter
+        self.beta = 1  # customer satisfaction parameter
+        self.omega = 1  # distance/time to cost parameter
 
     def parse(self, filename: str):
         def is_key_value(line: str, key: str):
@@ -229,7 +234,7 @@ class CourtesyBusesModel:
         K = list(range(self.N))
 
         # edges
-        A = [(i,j,k) for i in V for j in V for k in K if i!=j]
+        A = [(i, j, k) for i in V for j in V for k in K if i != j]
 
         # create edges manually
         #A = [(0,3,0),(3,1,0),(1,2,0),(2,0,0)]
@@ -349,7 +354,7 @@ class CourtesyBusesModel:
                 # customer satisfaction component
                 self.beta * quicksum(Z[i] - a[i] for i in C),
 
-        gurobipy.GRB.MINIMIZE)
+                gurobipy.GRB.MINIMIZE)
 
         # save LP
         m.write("courtesy-buses.lp")
@@ -409,6 +414,7 @@ CUSTOMERS
 """
         return s
 
+
 def main():
     global verbose
 
@@ -461,6 +467,7 @@ def main():
                 solution.save(solution_path)
             if do_draw:
                 draw(model, solution)
+
 
 if __name__ == "__main__":
     main()
