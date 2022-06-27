@@ -11,10 +11,10 @@ CUSTOMERS
 10 7 15
 
 ALPHA
-1
+a=1
 
 BETA
-1
+b=1
 
 OMEGA
-1
+o=1

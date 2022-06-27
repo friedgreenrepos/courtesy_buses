@@ -202,17 +202,17 @@ class CourtesyBusesModel:
 
                     # alpha
                     if section == SECTION_ALPHA:
-                        self.alpha = l
+                        self.alpha = int(get_value_from_key_value(l))
                         continue
 
                     # beta
                     if section == SECTION_BETA:
-                        self.beta = l
+                        self.beta = int(get_value_from_key_value(l))
                         continue
 
                     # omega
                     if section == SECTION_OMEGA:
-                        self.omega = l
+                        self.omega = int(get_value_from_key_value(l))
                         continue
             return True
         except Exception as e:
