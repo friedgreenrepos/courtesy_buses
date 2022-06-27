@@ -79,10 +79,9 @@ class Validator:
         for bus in self.get_buses_in_use():
             start_from_pub = 0
             end_in_pub = 0
-            for p in self.solution.passages:
-                if p[2] == bus:
-                    if p[0] == 0:
-                        start_from_pub += 1
+            for p in self.get_bus_trip(bus):
+                if p[0] == 0:
+                    start_from_pub += 1
                 if p[1] == 0:
                     end_in_pub += 1
             assert start_from_pub == 1
@@ -113,13 +112,13 @@ class Validator:
 
     def validate(self):
         'Check all constraints'
-        self.check_H1(self.model, self.solution)
-        self.check_H2(self.model, self.solution)
-        self.check_H3(self.model, self.solution)
-        self.check_H4(self.model, self.solution)
-        self.check_H5(self.model, self.solution)
-        self.check_H6(self.model, self.solution)
-        self.check_H8(self.model, self.solution)
+        self.check_H1()
+        self.check_H2()
+        self.check_H3()
+        self.check_H4()
+        self.check_H5()
+        self.check_H6()
+        self.check_H8()
 
     # COSTS COMPUTING
 
