@@ -70,7 +70,7 @@ def draw(model: 'CourtesyBusesModel', solution: 'CourtesyBusesSolution'):
             plt.annotate(f"bus{p[2]}| t_{p[0]}={p[3]:.1f}", (coord[p[0]][0], coord[p[0]][1]+offset))
             offset += 0.3
         else:
-            plt.annotate(f"t_{p[0]}={p[3]:.1f}", (coord[p[0]][0],coord[p[0]][1] - 0.2))
+            plt.annotate(f"t_{p[0]}={p[3]:.1f}", (coord[p[0]][0], coord[p[0]][1] - 0.2))
     # bus legend
     patch = [mpatches.Patch(color=colours[n], label="bus" + str(bus_in_use[n])) for n in range(len(bus_in_use))]
     ax.legend(handles=patch, loc="best")
