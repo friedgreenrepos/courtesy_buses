@@ -141,7 +141,7 @@ class Validator:
         xv = [0] + [c[0] for c in self.model.customers]
         yv = [0] + [c[1] for c in self.model.customers]
         # vertices: PUB + customers
-        V = {0} | self.get_customer_set()
+        V = {0} | self.get_customers_set()
         # euclidean distances
         dx = {(i, j): np.hypot(xv[i]-xv[j], yv[i]-yv[j]) for i in V for j in V if i != j}
         for p in self.solution.passages:
