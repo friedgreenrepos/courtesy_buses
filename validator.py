@@ -1,55 +1,55 @@
-from main import CourtesyBusesModel, CourtesyBusesSolution
+from main import Model, Solution
 import numpy as np
 
 
 class Validator:
-    def __init__(self, model: 'CourtesyBusesModel', solution: 'CourtesyBusesSolution'):
+    def __init__(self, model: 'Model', solution: 'Solution'):
         self.model = model
         self.solution = solution
 
     # HELP FUNCTIONS
 
     def get_i_nodes(self):
-        '''
+        """
         Get set of "i" nodes for pairs (i,j) in solution
         PUB node is excluded.
-        '''
+        """
         i_nodes = [p[0] for p in self.solution.passages]
         i_nodes = set(filter(lambda x: x != 0, i_nodes))
         return i_nodes
 
     def get_j_nodes(self):
-        '''
+        """
         Get set of "j" nodes for pairs (i,j) in solution
         PUB node is excluded.
-        '''
+        """
         j_nodes = [p[1] for p in self.solution.passages]
         j_nodes = set(filter(lambda x: x != 0, j_nodes))
         return j_nodes
 
     def get_des_arr_times(self):
-        'Get a_i for i in customers (desired arrival time)'
+        """Get a_i for i in customers (desired arrival time)"""
         return [c[2] for c in self.model.customers]
 
     def get_act_arr_times(self):
-        'Get z_i for i in customers (actual arrival time)'
+        """Get z_i for i in customers (actual arrival time)"""
         return [p[3] for p in self.solution.passages if p[0] != 0]
 
     def get_buses_in_use(self):
-        'Get buses in use in solution'
+        """Get buses in use in solution"""
         return list(set([p[2] for p in self.solution.passages]))
 
     def get_bus_trip(self, bus_id: int):
-        'Get bus trip for bus with bus_id'
+        """Get bus trip for bus with bus_id"""
         return [(p[0], p[1], p[3]) for p in self.solution.passages
                 if p[2] == bus_id]
 
     def get_customers_set(self):
-        'Get set of customers ids'
+        """Get set of customers ids"""
         return set(range(1, len(self.model.customers)+1))
 
     def get_customer_bus(self):
-        'Get pairs (i,k) where i is customer and k is bus'
+        """Get pairs (i,k) where i is customer and k is bus"""
         return [(p[1], p[2]) for p in self.solution.passages if p[1] != 0]
 
     # HARD CONSTRAINTS
@@ -123,10 +123,10 @@ class Validator:
     # COSTS COMPUTING
 
     def customer_satisfaction(self):
-        '''
+        """
         Compute customer satisfaction cost:
         the smaller the cost, the bigger the satisfaction
-        '''
+        """
         a = self.get_des_arr_times()
         z = self.get_act_arr_times()
         cost = 0
@@ -135,7 +135,7 @@ class Validator:
         return cost
 
     def trips_cost(self):
-        'Compute cost of all trips included in the solution'
+        """Compute cost of all trips included in the solution"""
         cost = 0
         # customers + PUB x and y coordinates
         xv = [0] + [c[0] for c in self.model.customers]
@@ -149,5 +149,5 @@ class Validator:
         return cost
 
     def get_total_cost(self):
-        'Compute objective function value'
+        """Compute objective function value"""
         return self.trips_cost() + self.customer_satisfaction()
