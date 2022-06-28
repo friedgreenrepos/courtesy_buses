@@ -54,17 +54,17 @@ def draw(model: 'CourtesyBusesModel', solution: 'CourtesyBusesSolution'):
     fig, ax = plt.subplots(1, 1)
     ax.clear()
     ax.set_title("Solution")
-    #pub
+    # pub
     ax.plot(0, 0, c='r', marker='D')
     ax.annotate("PUB", (0-0.5, 0))
-    #customers destinations
+    # customers destinations
     ax.scatter(xc, yc, c='g')
     for i in range(len(model.customers)):
         plt.annotate(f"a_{i+1}={ac[i]}", (xc[i], yc[i]+0.2))
 
     offset = 0.2
     for p in solution.passages:
-        plt.plot([coord[p[0]][0],coord[p[1]][0]], [coord[p[0]][1], coord[p[1]][1]], color=colours[p[2]])
+        plt.plot([coord[p[0]][0], coord[p[1]][0]], [coord[p[0]][1], coord[p[1]][1]], color=colours[p[2]])
         # if passage starts from PUB
         if p[0] == 0:
             plt.annotate(f"bus{p[2]}| t_{p[0]}={p[3]:.1f}", (coord[p[0]][0], coord[p[0]][1]+offset))
@@ -111,7 +111,7 @@ class CourtesyBusesSolution:
 
         for trip in trips:
             if not trip:
-                continue # should not happen
+                continue  # should not happen
             # figure out the bus
             k = trip[0][2]
             s += f"Bus {k}\n"
@@ -122,7 +122,7 @@ class CourtesyBusesSolution:
                 t_arrival = trip[passage_idx + 1][3] if passage_idx < len(trip) - 1 else None
                 if t_arrival:
                     s += f"\tt={t_start:.1f}\t{node_to_string(i)} -> {node_to_string(j)} t={t_arrival:.1f}\n"
-                else: # arrival time at the pub is not available in the model
+                else:  # arrival time at the pub is not available in the model
                     s += f"\tt={t_start:.1f}\t{node_to_string(i)} -> {node_to_string(j)}\n"
         return s
 
@@ -159,60 +159,60 @@ class CourtesyBusesModel:
 
                 section = SECTION_HEADER
 
-                for l in f:
-                    l = l.strip()
-                    if not l:
+                for line in f:
+                    line = line.strip()
+                    if not line:
                         # skip empty lines
                         continue
-                    if l.startswith("#"):
+                    if line.startswith("#"):
                         # skip comment
                         continue
 
                     # new section
-                    if l == "CUSTOMERS":
+                    if line == "CUSTOMERS":
                         section = SECTION_CUSTOMERS
                         continue
 
-                    if l == "ALPHA":
+                    if line == "ALPHA":
                         section = SECTION_ALPHA
                         continue
 
-                    if l == "BETA":
+                    if line == "BETA":
                         section = SECTION_ALPHA
                         continue
 
-                    if l == "OMEGA":
+                    if line == "OMEGA":
                         section = SECTION_ALPHA
                         continue
 
                     # header
                     if section == SECTION_HEADER:
-                        if is_key_value(l, "N"):
-                            self.N = int(get_value_from_key_value(l))
+                        if is_key_value(line, "N"):
+                            self.N = int(get_value_from_key_value(line))
                             continue
-                        if is_key_value(l, "Q"):
-                            self.Q = int(get_value_from_key_value(l))
+                        if is_key_value(line, "Q"):
+                            self.Q = int(get_value_from_key_value(line))
                             continue
 
                     # customers
                     if section == SECTION_CUSTOMERS:
-                        x, y, a, = l.split(" ")
+                        x, y, a, = line.split(" ")
                         self.customers.append((int(x), int(y), int(a)))
                         continue
 
                     # alpha
                     if section == SECTION_ALPHA:
-                        self.alpha = int(get_value_from_key_value(l))
+                        self.alpha = int(get_value_from_key_value(line))
                         continue
 
                     # beta
                     if section == SECTION_BETA:
-                        self.beta = int(get_value_from_key_value(l))
+                        self.beta = int(get_value_from_key_value(line))
                         continue
 
                     # omega
                     if section == SECTION_OMEGA:
-                        self.omega = int(get_value_from_key_value(l))
+                        self.omega = int(get_value_from_key_value(line))
                         continue
             return True
         except Exception as e:
@@ -237,7 +237,7 @@ class CourtesyBusesModel:
         A = [(i, j, k) for i in V for j in V for k in K if i != j]
 
         # create edges manually
-        #A = [(0,3,0),(3,1,0),(1,2,0),(2,0,0)]
+        # A = [(0,3,0),(3,1,0),(1,2,0),(2,0,0)]
 
         t = [[0] * len(V) for _ in V]
         c = [[0] * len(V) for _ in V]
@@ -259,7 +259,7 @@ class CourtesyBusesModel:
         # arrival times
         a = [None] + [c[2] for c in self.customers]
 
-        vprint(f"EDGES")
+        vprint("EDGES")
         vprint(A)
 
         vprint("TIMES")
