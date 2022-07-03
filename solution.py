@@ -59,3 +59,50 @@ class Solution:
             s += f"{p[0]} {p[1]} {p[2]} {p[3]:.1f}\n"
         return s
 
+    def get_i_nodes(self):
+        """
+        Return set of "i" nodes for pairs (i,j) in solution
+        PUB node is excluded.
+        """
+        i_nodes = [p[0] for p in self.passages]
+        i_nodes = set(filter(lambda x: x != 0, i_nodes))
+        return i_nodes
+
+    def get_j_nodes(self):
+        """
+        Return set of "j" nodes for pairs (i,j) in solution
+        PUB node is excluded.
+        """
+        j_nodes = [p[1] for p in self.passages]
+        j_nodes = set(filter(lambda x: x != 0, j_nodes))
+        return j_nodes
+
+    def get_act_arr_times(self):
+        """Return z_i, actual arrival time, for i in customers"""
+        return [p[3] for p in self.passages if p[0] != 0]
+
+    def get_buses_in_use(self):
+        """Return buses in use in solution"""
+        return list(set([p[2] for p in self.passages]))
+
+    def get_bus_trip(self, bus_id: int):
+        """Return bus trip for bus with bus_id"""
+        return [(p[0], p[1], p[3]) for p in self.passages
+                if p[2] == bus_id]
+
+    def get_customer_bus(self):
+        """Return pairs (i,k) where i is the customer and k is the bus"""
+        return [(p[1], p[2]) for p in self.passages if p[1] != 0]
+
+    def get_bus_route(self, bus_id: int):
+        """
+        Extract route/path from passages of solution.
+        [(n1,n2,t1),(n2,n3,t2),(n3,n1,t3)] --> [n1,n2,n3,n1]
+        """
+        route = []
+        for p in self.get_bus_trip(bus_id):
+            if p[0] == 0:
+                route.append(p[0])
+            route.append(p[1])
+        return route
+

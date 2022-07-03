@@ -97,3 +97,11 @@ class Model:
 
     def time(self, v1, v2):
         return self.distance(v1, v2)
+
+    def get_des_arr_times(self):
+        """Get a_i for i in customers (desired arrival time)"""
+        return [c[2] for c in self.customers]
+
+    def get_customers_set(self):
+        """Return set of customers ids"""
+        return set(range(1, len(self.customers)+1))
