@@ -1,16 +1,17 @@
 from math import sqrt
-from typing import Iterable
+from typing import Iterable, List
 
 from commons import PUB
 from model import Model
 from solution import Solution
+from validator import Validator
 
 
 def get_min_des_arr_time(available_customers: Iterable):
     """
-    From available customers passed as input:
+    From customers iterable passed as input:
     - Get the customer with the minimum desired arrival time
-    - Return customer id and customer tuple.
+    - Return customer id and customer tuple (xc,yc,ac).
     """
     min_time = min([c[2] for c in available_customers if c])
     for i, c in enumerate(available_customers):
@@ -22,9 +23,9 @@ def get_min_des_arr_time(available_customers: Iterable):
 
 def get_max_des_arr_time(available_customers: Iterable):
     """
-    From available customers passed as input:
+    From customers iterable passed as input:
     - Get the customer with the maximum desired arrival time.
-    - Return customer id and customer tuple.
+    - Return customer id and customer tuple (xc,yc,ac) .
     """
     max_time = max([c[2] for c in available_customers if c])
     for i, c in enumerate(available_customers):
@@ -63,7 +64,7 @@ class DummySolver(Heuristic):
         buses = [BusInfo(i) for i in range(self.model.N)]
 
         # available_customers = range(1, len(self.customers) + 1)
-        available_customers = {i + 1:c for i, c in enumerate(self.model.customers)}
+        available_customers = {i + 1: c for i, c in enumerate(self.model.customers)}
 
         # starting time from PUB coincides with max des_arr_time,
         # in that way we're sure all time windows are respected
@@ -101,6 +102,48 @@ class DummySolver(Heuristic):
         return solution
 
 
+def two_opt(model: Model, solution: Solution):
+    """
+    Try swapping all pairs of edges in each route.
+    Apply swap if solution is valid and cost is improved.
+    """
+    def route_to_solution(model: Model, route: List, bus: int):
+        """ Transform route (list of nodes) to Solution object"""
+        route_customers = [model.customers[node - 1] for node in route[1:-1]]
+        _, max_c = get_max_des_arr_time(route_customers)
+        starting_time = max_c[2]
+        solution = Solution(model)
+
+        for i, node in enumerate(route):
+            t = starting_time if node == PUB else solution.passages[-1][3] + model.time(solution.passages[-1][1], route[i+1])
+            try:
+                solution.add_passage(node, route[i+1], bus, t)
+            except:
+                break
+        return solution
+
+    for bus in solution.get_buses_in_use():
+        route = solution.get_bus_route(bus)
+        validator = Validator(model, route)
+        best = route
+        improved = True
+        while improved:
+            improved = False
+            for i in range(1, len(route)-2):
+                for j in range(i+1, len(route)):
+                    if j-i == 1:
+                        continue
+                    new_route = route[:]
+                    new_route[i:j] = route[j-1:i-1:-1]
+                    new_solution = route_to_solution(model, new_route, bus)
+                    new_validator = Validator(model, new_solution)
+                    if new_validator.validate() and (new_validator.get_total_cost() < validator.get_total_cost()):
+                        best = new_route
+                        improved = True
+            route = best
+        return best
+
+
 class LocalSearch:
     def __init__(self, model: Model, solution: Solution):
         self.model = model
@@ -108,7 +151,7 @@ class LocalSearch:
 
     def solve(self):
         solution = self.solution
-
+        solution = two_opt(self.model, solution)
         """
         while True:
             improved = False
