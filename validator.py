@@ -1,4 +1,5 @@
-from main import Model, Solution
+from model import Model
+from solution import Solution
 import numpy as np
 
 
