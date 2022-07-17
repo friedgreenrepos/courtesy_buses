@@ -1,8 +1,8 @@
 from typing import Iterable, List
 
-from commons import PUB
+from commons import PUB, vprint
 from model import Model
-from solution import Solution
+from solution import Solution, WipSolution
 from validator import Validator
 
 
@@ -45,7 +45,7 @@ class Heuristic:
 
 class DummySolver(Heuristic):
 
-    def solve(self):
+    def solve(self) -> WipSolution:
         """ Return greedy solution """
 
         class BusInfo:
@@ -80,7 +80,15 @@ class DummySolver(Heuristic):
                 # go to customer with min desired arrival time
                 i, _ = get_min_des_arr_time(available_customers.values())
 
-                t = starting_time if bus.node() == PUB else bus.edges[-1][2] + self.model.time(bus.node(), i)
+                # t = starting_time if bus.node() == PUB else bus.edges[-1][2] + self.model.time(bus.node(), i)
+                t = starting_time if bus.node() == PUB else bus.edges[-1][2] + self.model.time(bus.edges[-1][0], bus.edges[-1][1])
+                # vprint((bus.node(), i, t))
+                # vprint("bus.node()", bus.node())
+                # vprint("i", i)
+                # if bus.node() != PUB:
+                #     vprint("bus.edges[-1][2]", bus.edges[-1][2])
+                #     vprint("self.model.time(bus.node(), i)", self.model.time(bus.node(), i))
+                #     vprint("bus.edges[-1][2] + self.model.time(bus.node(), i)=", bus.edges[-1][2] + self.model.time(bus.node(), i))
                 bus.edges.append((bus.node(), i, t))
 
                 # print(f"Picked up {i}")
@@ -92,97 +100,223 @@ class DummySolver(Heuristic):
                 # if there is at least an edge go back to the PUB
                 bus.edges.append((bus.node(), PUB, bus.edges[-1][2] + self.model.time(bus.node(), PUB)))
 
+
         solution = Solution(self.model)
 
         for bus in buses:
             for edge in bus.edges:
                 solution.add_passage(edge[0], edge[1], bus.id, edge[2])
 
-        return solution
+        return solution.to_wip_solution()
 
 
-def add_route_to_solution(solution: Solution, route: List, bus: int):
-    """
-    Add route to solution passed as input. Route has to be the full route of a bus.
-    Route is a list of nodes [a,b,c,a] that is transformed into passages
-    of form [(a,b,t1),(b,c,t2),(c,a,t3)] in order to be added to a Solution object.
-    """
-    model = solution.model
-    route_customers = [model.customers[node - 1] for node in route[1:-1]]
-    _, max_c = get_max_des_arr_time(route_customers)
-    starting_time = max_c[2]
+# def add_route_to_solution(solution: Solution, route: List, bus: int):
+#     """
+#     Add route to solution passed as input. Route has to be the full route of a bus.
+#     Route is a list of nodes [a,b,c,a] that is transformed into passages
+#     of form [(a,b,t1),(b,c,t2),(c,a,t3)] in order to be added to a Solution object.
+#     """
+#     model = solution.model
+#     route_customers = [model.customers[node - 1] for node in route[1:-1]]
+#     _, max_c = get_max_des_arr_time(route_customers)
+#     starting_time = max_c[2]
+#
+#     for i, node in enumerate(route):
+#         t = starting_time if node == PUB else solution.passages[-1][3] + model.time(solution.passages[-1][1], route[i+1])
+#         try:
+#             solution.add_passage(node, route[i+1], bus, t)
+#         except:
+#             break
+#     return solution
+#
+#
+# class TwoOpt:
+#     def __init__(self, model: Model, solution: Solution, bus: int):
+#         self.model = model
+#         self.solution = solution
+#         self.bus = bus
+#
+#     def apply_opt(self):
+#         """Look for improvement in route by swapping edges"""
+#
+#         def move(i: int, j: int, route: List):
+#             """Swap edges (i,i+1), (j,j+1)"""
+#             new_route = route[:]
+#             new_route[i:j] = route[j - 1:i - 1:-1]
+#             return new_route
+#
+#         route = self.solution.get_bus_route(self.bus)
+#         print(f"starting route ==> {route}")
+#         validator = Validator(self.model, self.solution)
+#         best = route
+#         improved = True
+#         while improved:
+#             improved = False
+#             for i in range(1, len(route)-2):
+#                 for j in range(i+1, len(route)):
+#                     if j-i == 1:
+#                         continue
+#
+#                     new_route = move(i, j, route)
+#                     print(f"new route: {new_route}")
+#
+#                     new_solution = Solution(self.model)
+#                     new_solution = add_route_to_solution(new_solution, new_route, self.bus)
+#                     new_validator = Validator(self.model, new_solution)
+#                     try:
+#                         new_validator.validate()
+#                     except:
+#                         continue
+#                     print(f"old cost: {validator.get_total_cost()}")
+#                     print(f"new cost: {new_validator.get_total_cost()}")
+#                     if new_validator.get_total_cost() < validator.get_total_cost():
+#                         best = new_route
+#                         print(f"current best route ==> {best}")
+#                         improved = True
+#             route = best
+#             solution = Solution(self.model)
+#             validator = Validator(self.model, add_route_to_solution(solution, route, self.bus))
+#         return best
 
-    for i, node in enumerate(route):
-        t = starting_time if node == PUB else solution.passages[-1][3] + model.time(solution.passages[-1][1], route[i+1])
-        try:
-            solution.add_passage(node, route[i+1], bus, t)
-        except:
-            break
-    return solution
+#
+def compute_nodes_times(model, nodes, starting_time):
+    t = starting_time
+    out = []
+    for i, node in enumerate(nodes):
+        if i > 0:
+            t += model.time(node, nodes[i - 1])
+        out.append((node, t))
+    return out
 
 
-class TwoOpt:
-    def __init__(self, model: Model, solution: Solution, bus: int):
-        self.model = model
+class MoveNode:
+    def __init__(self, solution: WipSolution, node: int, bus: int, pos: int):
         self.solution = solution
+        self.node = node
         self.bus = bus
+        self.pos = pos
 
-    def apply_opt(self):
-        """Look for improvement in route by swapping edges"""
 
-        def move(i: int, j: int, route: List):
-            """Swap edges (i,i+1), (j,j+1)"""
-            new_route = route[:]
-            new_route[i:j] = route[j - 1:i - 1:-1]
-            return new_route
+    def apply(self):
+        # where's the node?
+        node_bus = None
+        for bus, trip in enumerate(self.solution.trips):
+            for (node, t) in trip:
+                if node == self.node:
+                    node_bus = bus
+                    break
+            if node_bus is not None:
+                break
+        if node_bus is None:
+            raise AssertionError("Don't know where's the node")
 
-        route = self.solution.get_bus_route(self.bus)
-        print(f"starting route ==> {route}")
-        validator = Validator(self.model, self.solution)
-        best = route
-        improved = True
-        while improved:
-            improved = False
-            for i in range(1, len(route)-2):
-                for j in range(i+1, len(route)):
-                    if j-i == 1:
-                        continue
+        if node_bus == self.bus:
+            # The source and the destination bus is the same
+            trip = self.solution.trips[self.bus]
 
-                    new_route = move(i, j, route)
-                    print(f"new route: {new_route}")
+            new_trip_nodes = []
 
-                    new_solution = Solution(self.model)
-                    new_solution = add_route_to_solution(new_solution, new_route, self.bus)
-                    new_validator = Validator(self.model, new_solution)
-                    try:
-                        new_validator.validate()
-                    except:
-                        continue
-                    print(f"old cost: {validator.get_total_cost()}")
-                    print(f"new cost: {new_validator.get_total_cost()}")
-                    if new_validator.get_total_cost() < validator.get_total_cost():
-                        best = new_route
-                        print(f"current best route ==> {best}")
-                        improved = True
-            route = best
-            solution = Solution(self.model)
-            validator = Validator(self.model, add_route_to_solution(solution, route, self.bus))
-        return best
+            # first part
+            i = 0
+            while i < self.pos + 1:
+                node, t = trip[i]
+                if node != self.node:
+                    new_trip_nodes.append(node)
+                i += 1
+
+            # second part
+            new_trip_nodes.append(self.node)
+
+            while i < len(trip):
+                node, t = trip[i]
+                if node != self.node:
+                    new_trip_nodes.append(node)
+                i += 1
+
+            # vprint("TripBefore", self.solution.trips[self.bus])
+            self.solution.trips[self.bus] = compute_nodes_times(
+                self.solution.model, new_trip_nodes, starting_time=trip[0][1])
+            # vprint("TripAfter", self.solution.trips[self.bus])
+        else:
+            src_bus = node_bus
+            dst_bus = self.bus
+
+            src_trip = self.solution.trips[src_bus]
+            dst_trip = self.solution.trips[dst_bus]
+
+            src_nodes = [node for (node, t) in src_trip if node != self.node]
+
+            dst_nodes = []
+            for i in range(self.pos + 1):
+                dst_nodes.append(dst_trip[i][0])
+
+            dst_nodes.append(self.node)
+
+            for i in range(self.pos + 1, len(dst_trip)):
+                dst_nodes.append(dst_trip[i][0])
+
+            self.solution.trips[src_bus] = compute_nodes_times(
+                self.solution.model, src_nodes, starting_time=src_trip[0][1])
+            self.solution.trips[dst_bus] = compute_nodes_times(
+                self.solution.model, dst_nodes, starting_time=dst_trip[0][1])
 
 
 class LocalSearch:
-    def __init__(self, model: Model, solution: Solution):
+    def __init__(self, model: Model, solution: WipSolution):
         self.model = model
         self.solution = solution
 
     def solve(self):
         solution = self.solution
-        new_solution = Solution(self.model)
-        for bus in solution.get_buses_in_use():
-            two_opt = TwoOpt(self.model, self.solution, bus)
-            new_route = two_opt.apply_opt()
-            new_solution = add_route_to_solution(new_solution, new_route, bus)
-        return new_solution
+        best_result = Validator(self.model, solution.to_solution()).validate()
+        vprint(f"[feasible={best_result.feasible}, violations={best_result.hard_violations}, cost={best_result.cost}]")
+
+        new_solution = solution.copy()
+
+        improved = True
+
+        vprint("==== LS START ====")
+        while improved:
+            improved = False
+            for dst_bus in range(len(solution.trips)):
+                for src_bus, src_bus_trip in enumerate(solution.trips):
+                    for (src_node, src_t) in src_bus_trip:
+                        for dst_pos in range(len(solution.trips[dst_bus])):
+                            mv = MoveNode(new_solution, src_node, dst_bus, dst_pos)
+                            mv.apply()
+
+                            # check
+                            # TODO: wip solution
+                            result = Validator(self.model, new_solution.to_solution()).validate()
+                            vprint(f"MoveNode(node={mv.node}, bus={mv.bus}, pos={mv.pos}) -> "
+                                   f"[feasible={result.feasible}, violations={result.hard_violations}, cost={result.cost}]"
+                                   f"\t// best_cost={best_result.cost}")
+
+                            if result.feasible and result.cost < best_result.cost:
+                                vprint(f"*** New best solution {result.cost} ***")
+                                solution = new_solution
+                                best_result = result
+                                improved = True
+
+                            new_solution = solution.copy()
+
+                            if improved:
+                                break
+                        if improved:
+                            break
+                    if improved:
+                        break
+                if improved:
+                    break
+        vprint("==== LS END ====")
+
+        return solution
+
+        # for bus in solution.get_buses_in_use():
+        #     two_opt = TwoOpt(self.model, self.solution, bus)
+        #     new_route = two_opt.apply_opt()
+        #     new_solution = add_route_to_solution(new_solution, new_route, bus)
+        # return new_solution
 
         """
         while True:
@@ -236,18 +370,23 @@ class HeuristicSolver:
         self.model = model
         self.heuristic = heuristic
 
-    def solve(self):
+    def solve(self) -> Solution:
         # build initial solution
-        initial_solution = DummySolver(self.model).solve()
+        initial_solution: WipSolution = DummySolver(self.model).solve()
 
         # optimize
-        if self.heuristic not in  ["none", "ls"]:
+        if self.heuristic not in ["none", "ls", "test"]:
             raise NotImplementedError()
 
         solution = initial_solution
 
         if self.heuristic == "ls":
             solution = LocalSearch(self.model, initial_solution).solve()
-        # elif
+        elif self.heuristic == "test":
+            m = MoveNode(solution, 2, 0, 2)
+            # m = MoveNode(solution, 3, 0, 3)
+            # m = MoveNode(solution, 7, 0, 2)
+            m.apply()
 
-        return solution
+        out = solution.to_solution()
+        return out

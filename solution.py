@@ -4,6 +4,32 @@ from commons import node_to_string, PUB
 from model import Model
 
 
+class WipSolution:
+    def __init__(self, model: Model):
+        self.model = model
+        self.trips = [[] for k in range(model.N)]
+
+    def append(self, bus: int, node: int, t: float):
+        self.trips[bus].append((node, t))
+
+    def to_solution(self):
+        s = Solution(self.model)
+        for bus, bus_trip in enumerate(self.trips):
+            for i, (node, t) in enumerate(bus_trip):
+                if i < len(bus_trip) - 1:
+                    s.add_passage(node, bus_trip[i + 1][0], bus, t)
+                else:
+                    s.add_passage(node, 0, bus, t)
+        return s
+
+    def copy(self) -> 'WipSolution':
+        wip = WipSolution(self.model)
+        wip.trips = [
+            list(trip)
+            for trip in self.trips
+        ]
+        return wip
+
 class Solution:
     def __init__(self, model: Model):
         self.model = model
@@ -17,24 +43,27 @@ class Solution:
         with Path(filename).open("w") as f:
             f.write(f"# starting_node arrival_node bus t_arrival_node\n{str(self)}")
 
+    def compute_trips(self):
+        trips = [[(i, j, k, t)] for (i, j, k, t) in self.passages if i == PUB]
+        n_picked_edges = len(trips)
+        while n_picked_edges < len(self.passages):
+            for trip in trips:
+                if trip[-1][1] == PUB:
+                    continue  # closed
+                for (i, j, k, t) in self.passages:
+                    if i == trip[-1][1]:
+                        trip.append((i, j, k, t))
+                        n_picked_edges += 1
+                        break
+        return trips
+
     def description(self):
         # compute trips from a set of edges
-        def compute_trips(passages):
-            trips = [[(i, j, k, t)] for (i, j, k, t) in passages if i == PUB]
-            n_picked_edges = len(trips)
-            while n_picked_edges < len(passages):
-                for trip in trips:
-                    if trip[-1][1] == PUB:
-                        continue  # closed
-                    for (i, j, k, t) in passages:
-                        if i == trip[-1][1]:
-                            trip.append((i, j, k, t))
-                            n_picked_edges += 1
-                            break
-            return trips
-
         s = ""
-        trips = compute_trips(self.passages)
+        trips = self.compute_trips()
+        # print(trips)
+        # print("**********")
+        # print(self.passages)
 
         for trip in trips:
             if not trip:
@@ -110,3 +139,11 @@ class Solution:
                 route.append(p[0])
             route.append(p[1])
         return route
+
+    def to_wip_solution(self):
+        wip = WipSolution(self.model)
+        trips = self.compute_trips()
+        for bus_trip in trips:
+            for passage in bus_trip:
+                wip.append(passage[2], passage[0], passage[3])
+        return wip

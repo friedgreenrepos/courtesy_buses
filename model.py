@@ -1,7 +1,7 @@
 from math import sqrt
 from pathlib import Path
 
-from commons import PUB, eprint
+from commons import PUB, eprint, vprint
 
 
 class Model:
@@ -105,3 +105,9 @@ class Model:
     def get_customers_set(self):
         """Return set of customers ids"""
         return set(range(1, len(self.customers)+1))
+
+    def dump_information(self):
+        for i in range(0, len(self.customers) + 1):
+            for j in range(0, len(self.customers) + 1):
+                if i < j:
+                    vprint(f"({i}) ({j}): t={self.time(i, j)}")

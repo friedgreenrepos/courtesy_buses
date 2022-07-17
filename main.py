@@ -4,12 +4,11 @@ from solution import Solution
 from model import Model
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-from commons import vprint
+from commons import vprint, set_verbose
 from commons import verbose
 import numpy as np
 from gurobisolver import GurobiSolver
 from heuristics import DummySolver, HeuristicSolver
-
 
 def draw(model: 'Model', solution: 'Solution'):
     """ Draw model solution in a new window"""
@@ -60,9 +59,9 @@ def draw(model: 'Model', solution: 'Solution'):
     plt.show()
 
 
-def main():
-    global verbose
 
+
+def main():
     parser = argparse.ArgumentParser(
         description="Courtesy Buses"
     )
@@ -91,7 +90,7 @@ def main():
     parser.add_argument("solution", help="solution path (output)", nargs="?")
 
     parsed = vars(parser.parse_args(sys.argv[1:]))
-    verbose = parsed.get("verbose")
+    set_verbose(parsed.get("verbose"))
     do_draw = parsed.get("draw")
     model_path = parsed.get("model")
     solution_path = parsed.get("solution")
@@ -103,6 +102,7 @@ def main():
         vprint("========= MODEL ==========\n"
                f"{model}\n"
                "==========================")
+        # model.dump_information()
 
         if heuristic:
             heuristic_solver = HeuristicSolver(model, heuristic)

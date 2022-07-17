@@ -9,6 +9,10 @@ EPSILON = 1e-3
 verbose = False
 
 
+def set_verbose(v):
+    global verbose
+    verbose = v
+
 def node_to_string(v):
     return 'PUB' if v == 0 else f"({v})"
 

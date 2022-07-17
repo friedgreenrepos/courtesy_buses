@@ -1,0 +1,24 @@
+# bus number
+N=2
+
+# bus capacity
+Q=4
+
+CUSTOMERS
+# x y a
+5 5 30
+8 2 40
+10 7 15
+7 9 25
+3 7 20
+3 2 55
+2 5 30
+
+ALPHA
+a=1
+
+BETA
+b=1
+
+OMEGA
+o=1
