@@ -90,6 +90,11 @@ class Solution:
         return [(p[0], p[1], p[3]) for p in self.passages
                 if p[2] == bus_id]
 
+    def get_bus_edges(self, bus_id:int):
+        """Return trip for bus with bus_id, but edges only (no arrival time)"""
+        return [(p[0], p[1]) for p in self.passages
+                if p[2] == bus_id]
+
     def get_customer_bus(self):
         """Return pairs (i,k) where i is the customer and k is the bus"""
         return [(p[1], p[2]) for p in self.passages if p[1] != 0]
@@ -105,4 +110,3 @@ class Solution:
                 route.append(p[0])
             route.append(p[1])
         return route
-
