@@ -23,7 +23,7 @@ class Validator:
             for p in self.solution.passages:
                 if p[2] == bus:
                     onboard += 1
-            assert (onboard - 1) <= self.model.Q
+            assert (onboard - 1) <= self.model.Q  # -1 because the pub is between the passages
 
     def check_H2(self):
         """H2. Take all customers home and only once"""

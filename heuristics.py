@@ -196,7 +196,6 @@ class MoveNode:
         self.bus = bus
         self.pos = pos
 
-
     def apply(self):
         # where's the node?
         node_bus = None

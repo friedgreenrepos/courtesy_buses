@@ -3,3 +3,4 @@ __pycache__
 *.lp
 solutions/
 .idea
+/tmp

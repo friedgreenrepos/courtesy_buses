@@ -5,10 +5,11 @@ from model import Model
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from commons import vprint, set_verbose
-from commons import verbose
 import numpy as np
 from gurobisolver import GurobiSolver
 from heuristics import DummySolver, HeuristicSolver
+from validator import Validator
+
 
 def draw(model: 'Model', solution: 'Solution'):
     """ Draw model solution in a new window"""
@@ -57,8 +58,6 @@ def draw(model: 'Model', solution: 'Solution'):
     patch = [mpatches.Patch(color=colours[n], label="bus" + str(bus_in_use[n])) for n in range(len(bus_in_use))]
     ax.legend(handles=patch, loc="best")
     plt.show()
-
-
 
 
 def main():
@@ -118,6 +117,9 @@ def main():
             print("========= SOLUTION (description) ==========\n"
                   f"{solution.description()}"
                   "==========================================")
+            result = Validator(model, solution).validate()
+            print("========= SOLUTION (cost) ==========\n"
+                  f"{result.cost}")
 
             if solution_path:
                 solution.save(solution_path)
