@@ -102,6 +102,11 @@ class Model:
         """Get a_i for i in customers (desired arrival time)"""
         return [c[2] for c in self.customers]
 
+    def get_customer_arr_time(self, v):
+        if v == PUB:
+            raise AssertionError("Pub is not a customer!")
+        return self.customers[v - 1][2]
+
     def get_customers_set(self):
         """Return set of customers ids"""
         return set(range(1, len(self.customers)+1))

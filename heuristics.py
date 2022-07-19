@@ -5,6 +5,8 @@ from model import Model
 from solution import Solution, WipSolution
 from validator import Validator
 
+EPSILON = 10e-3
+
 
 def get_min_des_arr_time(available_customers: Iterable):
     """
@@ -99,7 +101,6 @@ class DummySolver(Heuristic):
             if bus.edges:
                 # if there is at least an edge go back to the PUB
                 bus.edges.append((bus.node(), PUB, bus.edges[-1][2] + self.model.time(bus.node(), PUB)))
-
 
         solution = Solution(self.model)
 
@@ -260,6 +261,33 @@ class MoveNode:
                 self.solution.model, dst_nodes, starting_time=dst_trip[0][1])
 
 
+class OptTimeMove:
+
+    def __init__(self, solution: WipSolution, bus: int):
+        self.solution = solution
+        self.bus = bus
+
+    def apply(self):
+        trip = self.solution.trips[self.bus]
+        old_starting_time = trip[0][1]
+        new_starting_time = 0
+        for (node, t) in trip[1:]:
+            a = self.solution.model.get_customer_arr_time(node)
+            trip_time = t - old_starting_time
+            new_starting_time = max(new_starting_time, a - trip_time)
+            print(f"Node -> {node}")
+            print(f"a -> {a}")
+            print(f"t -> {t}")
+            print(f"trip time -> {trip_time}")
+            print(f"New starting time -> {new_starting_time}")
+
+        new_starting_time += EPSILON
+        vprint("TripBefore", self.solution.trips[self.bus])
+        self.solution.trips[self.bus] = compute_nodes_times(
+                self.solution.model, [node for (node, t) in trip], starting_time=new_starting_time)
+        vprint("TripAfter", self.solution.trips[self.bus])
+
+
 class LocalSearch:
     def __init__(self, model: Model, solution: WipSolution):
         self.model = model
@@ -270,8 +298,6 @@ class LocalSearch:
         best_result = Validator(self.model, solution.to_solution()).validate()
         vprint(f"[feasible={best_result.feasible}, violations={best_result.hard_violations}, cost={best_result.cost}]")
 
-        new_solution = solution.copy()
-
         improved = True
 
         vprint("==== LS START ====")
@@ -281,6 +307,7 @@ class LocalSearch:
                 for src_bus, src_bus_trip in enumerate(solution.trips):
                     for (src_node, src_t) in src_bus_trip:
                         for dst_pos in range(len(solution.trips[dst_bus])):
+                            new_solution = solution.copy()
                             mv = MoveNode(new_solution, src_node, dst_bus, dst_pos)
                             mv.apply()
 
@@ -297,8 +324,6 @@ class LocalSearch:
                                 best_result = result
                                 improved = True
 
-                            new_solution = solution.copy()
-
                             if improved:
                                 break
                         if improved:
@@ -307,15 +332,24 @@ class LocalSearch:
                         break
                 if improved:
                     break
+            for bus, trip in enumerate(self.solution.trips):
+                if not trip:
+                    continue
+                mv = OptTimeMove(solution, bus)
+                mv.apply()
+
+                result = Validator(self.model, solution.to_solution()).validate()
+                vprint(f"OptTimeMove(bus={mv.bus}) -> "
+                       f"[feasible={result.feasible}, violations={result.hard_violations}, cost={result.cost}]"
+                       f"\t// best_cost={best_result.cost}")
+
+                if result.feasible and result.cost < best_result.cost:
+                    vprint(f"*** New best solution {result.cost} ***")
+                    best_result = result
+                    improved = True
         vprint("==== LS END ====")
 
         return solution
-
-        # for bus in solution.get_buses_in_use():
-        #     two_opt = TwoOpt(self.model, self.solution, bus)
-        #     new_route = two_opt.apply_opt()
-        #     new_solution = add_route_to_solution(new_solution, new_route, bus)
-        # return new_solution
 
         """
         while True:
