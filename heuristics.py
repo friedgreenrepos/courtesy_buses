@@ -8,7 +8,7 @@ from validator import Validator
 EPSILON = 10e-3
 
 
-def get_min_des_arr_time(available_customers: Iterable):
+def min_des_arr_time(available_customers: Iterable):
     """
     From customers iterable passed as input:
     - Get the customer with the minimum desired arrival time
@@ -22,7 +22,7 @@ def get_min_des_arr_time(available_customers: Iterable):
             return i+1, c
 
 
-def get_max_des_arr_time(available_customers: Iterable):
+def max_des_arr_time(available_customers: Iterable):
     """
     From customers iterable passed as input:
     - Get the customer with the maximum desired arrival time.
@@ -65,41 +65,29 @@ class DummySolver(Heuristic):
 
         buses = [BusInfo(i) for i in range(self.model.N)]
 
-        # available_customers = range(1, len(self.customers) + 1)
         available_customers = {i + 1: c for i, c in enumerate(self.model.customers)}
 
         # starting time from PUB coincides with max des_arr_time,
         # in that way we're sure all time windows are respected
-        _, max_c = get_max_des_arr_time(available_customers.values())
+        _, max_c = max_des_arr_time(available_customers.values())
         starting_time = max_c[2]
 
         for bus in buses:
             # print(f"Bus {bus.id}")
-            while bus.capacity > 0 and list(available_customers.values()).count(None) != len(self.model.customers):
-                # print(f"Capacity = {bus.capacity}")
-                # print(f"Customers = {available_customers}")
+            while bus.capacity > 0 and \
+                    list(available_customers.values()).count(None) != len(self.model.customers):
 
                 # go to customer with min desired arrival time
-                i, _ = get_min_des_arr_time(available_customers.values())
+                i, _ = min_des_arr_time(available_customers.values())
 
-                # t = starting_time if bus.node() == PUB else bus.edges[-1][2] + self.model.time(bus.node(), i)
                 t = starting_time if bus.node() == PUB else bus.edges[-1][2] + self.model.time(bus.edges[-1][0], bus.edges[-1][1])
-                # vprint((bus.node(), i, t))
-                # vprint("bus.node()", bus.node())
-                # vprint("i", i)
-                # if bus.node() != PUB:
-                #     vprint("bus.edges[-1][2]", bus.edges[-1][2])
-                #     vprint("self.model.time(bus.node(), i)", self.model.time(bus.node(), i))
-                #     vprint("bus.edges[-1][2] + self.model.time(bus.node(), i)=", bus.edges[-1][2] + self.model.time(bus.node(), i))
                 bus.edges.append((bus.node(), i, t))
-
-                # print(f"Picked up {i}")
 
                 bus.capacity -= 1
                 available_customers[i] = None
 
             if bus.edges:
-                # if there is at least an edge go back to the PUB
+                # if there is at least an edge, go back to the PUB
                 bus.edges.append((bus.node(), PUB, bus.edges[-1][2] + self.model.time(bus.node(), PUB)))
 
         solution = Solution(self.model)
@@ -179,7 +167,7 @@ class DummySolver(Heuristic):
 #             validator = Validator(self.model, add_route_to_solution(solution, route, self.bus))
 #         return best
 
-#
+
 def compute_nodes_times(model, nodes, starting_time):
     t = starting_time
     out = []
@@ -198,7 +186,7 @@ class MoveNode:
         self.pos = pos
 
     def apply(self):
-        # where's the node?
+        # find the node
         node_bus = None
         for bus, trip in enumerate(self.solution.trips):
             for (node, t) in trip:
@@ -208,7 +196,7 @@ class MoveNode:
             if node_bus is not None:
                 break
         if node_bus is None:
-            raise AssertionError("Don't know where's the node")
+            raise AssertionError("Don't know where the node is")
 
         if node_bus == self.bus:
             # The source and the destination bus is the same
@@ -272,19 +260,21 @@ class OptTimeMove:
         old_starting_time = trip[0][1]
         new_starting_time = 0
         for (node, t) in trip[1:]:
-            a = self.solution.model.get_customer_arr_time(node)
+            a = self.solution.model.customer_arr_time(node)
             trip_time = t - old_starting_time
             new_starting_time = max(new_starting_time, a - trip_time)
-            print(f"Node -> {node}")
-            print(f"a -> {a}")
-            print(f"t -> {t}")
-            print(f"trip time -> {trip_time}")
-            print(f"New starting time -> {new_starting_time}")
+            # print(f"Node -> {node}")
+            # print(f"a -> {a}")
+            # print(f"t -> {t}")
+            # print(f"trip time -> {trip_time}")
+            # print(f"New starting time -> {new_starting_time}")
 
         new_starting_time += EPSILON
         vprint("TripBefore", self.solution.trips[self.bus])
         self.solution.trips[self.bus] = compute_nodes_times(
-                self.solution.model, [node for (node, t) in trip], starting_time=new_starting_time)
+            self.solution.model,
+            [node for (node, t) in trip],
+            starting_time=new_starting_time)
         vprint("TripAfter", self.solution.trips[self.bus])
 
 
@@ -295,7 +285,7 @@ class LocalSearch:
 
     def solve(self):
         solution = self.solution
-        best_result = Validator(self.model, solution.to_solution()).validate()
+        best_result = Validator(self.model, solution).validate()
         vprint(f"[feasible={best_result.feasible}, violations={best_result.hard_violations}, cost={best_result.cost}]")
 
         improved = True
@@ -311,9 +301,8 @@ class LocalSearch:
                             mv = MoveNode(new_solution, src_node, dst_bus, dst_pos)
                             mv.apply()
 
-                            # check
-                            # TODO: wip solution
-                            result = Validator(self.model, new_solution.to_solution()).validate()
+                            # check validity and improvement
+                            result = Validator(self.model, new_solution).validate()
                             vprint(f"MoveNode(node={mv.node}, bus={mv.bus}, pos={mv.pos}) -> "
                                    f"[feasible={result.feasible}, violations={result.hard_violations}, cost={result.cost}]"
                                    f"\t// best_cost={best_result.cost}")
@@ -338,7 +327,7 @@ class LocalSearch:
                 mv = OptTimeMove(solution, bus)
                 mv.apply()
 
-                result = Validator(self.model, solution.to_solution()).validate()
+                result = Validator(self.model, solution).validate()
                 vprint(f"OptTimeMove(bus={mv.bus}) -> "
                        f"[feasible={result.feasible}, violations={result.hard_violations}, cost={result.cost}]"
                        f"\t// best_cost={best_result.cost}")
@@ -349,52 +338,6 @@ class LocalSearch:
                     improved = True
         vprint("==== LS END ====")
 
-        return solution
-
-        """
-        while True:
-            improved = False
-
-            for move in 2opt_neighbourhood(solution) # M1
-                # move := (arc, arc)
-                prev_solution = solution
-                move.apply()
-
-                if move is not feasible:
-                    continue
-
-                if move.cost >= prev_solution.cost
-                    continue
-
-                # good move
-
-                improved = True
-                break
-
-            # OPTIONAL
-            if improved:
-                continue
-
-            for move in bus_trip_time_optimization_neighbourhood(solution) # M2
-                prev_solution = solution
-                move.apply()
-
-                if move is not feasible:
-                    continue
-
-                if move.cost >= prev_solution.cost
-                    continue
-
-                # good move
-
-                improved = True
-                break
-
-            if not improved:
-                break
-
-
-        """
         return solution
 
 
@@ -421,5 +364,5 @@ class HeuristicSolver:
             # m = MoveNode(solution, 7, 0, 2)
             m.apply()
 
-        out = solution.to_solution()
-        return out
+        #out = solution.to_solution()
+        return solution

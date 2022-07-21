@@ -30,6 +30,14 @@ class WipSolution:
         ]
         return wip
 
+    def nodes(self):
+        """ Return all nodes in all routes, ordered by id (PUB excluded)"""
+        nodes = []
+        for bus_trip in self.trips:
+            nodes = nodes + ([node for (node, _) in bus_trip
+                              if node != PUB])
+        return sorted(nodes)
+
 
 class Solution:
     def __init__(self, model: Model):
@@ -44,6 +52,7 @@ class Solution:
         with Path(filename).open("w") as f:
             f.write(f"# starting_node arrival_node bus t_arrival_node\n{str(self)}")
 
+    # TODO: check if trip ends in PUB
     def compute_trips(self):
         trips = [[(i, j, k, t)] for (i, j, k, t) in self.passages if i == PUB]
         n_picked_edges = len(trips)

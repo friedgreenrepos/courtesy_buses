@@ -1,5 +1,7 @@
+from commons import PUB
 from model import Model
 from solution import Solution
+from solution import WipSolution
 import numpy as np
 
 
@@ -12,65 +14,53 @@ class ValidationResult:
 
 
 class Validator:
-    def __init__(self, model: 'Model', solution: 'Solution'):
+    def __init__(self, model: 'Model', solution: 'WipSolution'):
         self.model = model
         self.solution = solution
 
     def check_H1(self):
         """H1. Bus capacity"""
-        for bus in self.solution.get_buses_in_use():
-            onboard = 0
-            for p in self.solution.passages:
-                if p[2] == bus:
-                    onboard += 1
-            assert (onboard - 1) <= self.model.Q  # -1 because the pub is between the passages
+        for bus_trip in self.solution.trips:
+            nodes_in_trip = [node for (node, _) in bus_trip
+                             if node != PUB]
+            assert len(nodes_in_trip) <= self.model.Q
 
     def check_H2(self):
         """H2. Take all customers home and only once"""
-        i_nodes = self.solution.get_i_nodes()
-        assert i_nodes == self.model.get_customers_set()
+        assert self.model.customers_set() == self.solution.nodes
 
+    # TODO: get rid of this if useless
     def check_H3(self):
         """H3. Flow conservation"""
-        i_nodes = self.solution.get_i_nodes()
-        j_nodes = self.solution.get_j_nodes()
-        assert i_nodes == j_nodes
+        # it's implicit
+        assert True
 
     def check_H4(self):
         """H4. Each bus is used only once, and it starts and ends in PUB"""
-        for bus in self.solution.get_buses_in_use():
-            start_from_pub = 0
-            end_in_pub = 0
-            for p in self.solution.get_bus_trip(bus):
-                if p[0] == 0:
-                    start_from_pub += 1
-                if p[1] == 0:
-                    end_in_pub += 1
-            assert start_from_pub == 1
-            assert end_in_pub == 1
+        # n.of buses
+        buses_in_use = [bus for bus, _ in enumerate(self.solution.trips)]
+        assert len(buses_in_use) <= self.model.buses()
+        # start in PUB
+        for bus_trip in self.solution.trips:
+            assert bus_trip[0][0] == PUB
+        # end in pub is implicit
 
     def check_H5(self):
         """H5. Arrival time lower bound"""
-        a = self.model.get_des_arr_times()
-        z = [round(t, 2) for t in self.solution.get_act_arr_times()]
-        for a_i, z_i in zip(a, z):
-            assert z_i >= a_i
+        for bus_trip in self.solution.trips:
+            for (node, t) in bus_trip:
+                if node == PUB:
+                    continue
+                assert t <= self.model.customer_arr_time(node)
 
     def check_H6(self):
         """H6. Y constraint: arrival times are consecutive"""
-        for bus in self.solution.get_buses_in_use():
-            bus_trip = self.solution.get_bus_trip(bus)
-            timeline = [t[2] for t in bus_trip]
-            assert timeline == sorted(timeline)
-
-    def check_H8(self):
-        """H8. W_ik constraint"""
-        for c in self.model.get_customers_set():
-            c_count = 0
-            for bus in self.solution.get_buses_in_use():
-                if (c, bus) in self.solution.get_customer_bus():
-                    c_count += 1
-            assert c_count == 1
+        for bus_trip in self.solution.trips:
+            for i, (node, t) in enumerate(bus_trip):
+                try:
+                    assert t < bus_trip[i+1][1]
+                except IndexError:
+                    break
 
     def check_hard(self):
         """Check all constraints"""
@@ -80,7 +70,6 @@ class Validator:
         self.check_H4()
         self.check_H5()
         self.check_H6()
-        self.check_H8()
 
     # COSTS COMPUTING
 
@@ -89,30 +78,32 @@ class Validator:
         Compute customer satisfaction cost:
         the smaller the cost, the bigger the satisfaction
         """
-        a = self.model.get_des_arr_times()
-        z = self.solution.get_act_arr_times()
         cost = 0
-        for a_i, z_i in zip(a, z):
-            cost += z_i - a_i
+        for bus_trip in self.solution.trips:
+            for (node, t) in bus_trip:
+                if node == PUB:
+                    continue
+                delta = t - self.model.customer_arr_time(node)
+                cost += delta
         return cost
 
     def trips_cost(self):
-        """Compute cost of all trips included in the solution"""
+        """Compute cost of all trips in the solution"""
         cost = 0
         # customers + PUB x and y coordinates
         xv = [0] + [c[0] for c in self.model.customers]
         yv = [0] + [c[1] for c in self.model.customers]
-        # vertices: PUB + customers
-        V = {0} | self.model.get_customers_set()
-        # euclidean distances
-        # dx = {(i, j): np.hypot(xv[i]-xv[j], yv[i]-yv[j]) for i in V for j in V if i != j}
-        dx = {(i, j): np.hypot(xv[i]-xv[j], yv[i]-yv[j]) for i in V for j in V}
-        for p in self.solution.passages:
-            cost = cost + dx.get((p[0], p[1]))
+        for bus_trip in self.solution.trips:
+            for i, (node, _) in enumerate(bus_trip):
+                try:
+                    next_node = bus_trip[i + 1][0]
+                except IndexError:
+                    break
+                cost += self.model.time(node, next_node)
         return cost
 
-    def get_total_cost(self):
-        """Compute objective function value"""
+    def total_cost(self):
+        """Compute objective function value: trips + customer satisfaction """
         return self.trips_cost() + self.customer_satisfaction()
 
     def validate(self):
@@ -155,13 +146,7 @@ class Validator:
             result.feasible = False
             result.hard_violations.append("H6")
 
-        try:
-            self.check_H8()
-        except AssertionError:
-            result.feasible = False
-            result.hard_violations.append("H8")
-
         # lazy, don't compute if not feasible
         if result.feasible:
-            result.cost = self.get_total_cost()
+            result.cost = self.total_cost()
         return result
