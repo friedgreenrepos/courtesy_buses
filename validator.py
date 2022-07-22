@@ -1,15 +1,12 @@
 from commons import PUB
 from model import Model
-from solution import Solution
 from solution import WipSolution
-import numpy as np
 
 
 class ValidationResult:
     def __init__(self):
         self.feasible = False
         self.cost = 0
-
         self.hard_violations = []
 
 
@@ -27,7 +24,7 @@ class Validator:
 
     def check_H2(self):
         """H2. Take all customers home and only once"""
-        assert self.model.customers_set() == self.solution.nodes
+        assert self.model.customers_set() == set(self.solution.nodes())
 
     # TODO: get rid of this if useless
     def check_H3(self):
@@ -38,20 +35,22 @@ class Validator:
     def check_H4(self):
         """H4. Each bus is used only once, and it starts and ends in PUB"""
         # n.of buses
-        buses_in_use = [bus for bus, _ in enumerate(self.solution.trips)]
-        assert len(buses_in_use) <= self.model.buses()
+        buses_in_use = [bus for bus, bus_trip in enumerate(self.solution.trips) if bus_trip]
+        assert len(buses_in_use) <= len(self.model.buses())
         # start in PUB
         for bus_trip in self.solution.trips:
-            assert bus_trip[0][0] == PUB
+            if bus_trip:
+                assert bus_trip[0][0] == PUB
         # end in pub is implicit
 
     def check_H5(self):
         """H5. Arrival time lower bound"""
         for bus_trip in self.solution.trips:
-            for (node, t) in bus_trip:
-                if node == PUB:
-                    continue
-                assert t <= self.model.customer_arr_time(node)
+            if bus_trip:
+                for (node, t) in bus_trip:
+                    if node == PUB:
+                        continue
+                    assert t >= self.model.customer_arr_time(node)
 
     def check_H6(self):
         """H6. Y constraint: arrival times are consecutive"""
@@ -90,9 +89,6 @@ class Validator:
     def trips_cost(self):
         """Compute cost of all trips in the solution"""
         cost = 0
-        # customers + PUB x and y coordinates
-        xv = [0] + [c[0] for c in self.model.customers]
-        yv = [0] + [c[1] for c in self.model.customers]
         for bus_trip in self.solution.trips:
             for i, (node, _) in enumerate(bus_trip):
                 try:
