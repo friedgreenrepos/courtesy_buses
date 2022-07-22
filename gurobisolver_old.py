@@ -1,9 +1,14 @@
 from model import Model
+from math import sqrt
+from pathlib import Path
 
 import gurobipy
 from gurobipy import quicksum
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 from commons import PUB, eprint, vprint, verbose, node_to_string, EPSILON
-from solution import WipSolution
+from solution import Solution
 
 
 class GurobiSolver:
@@ -156,6 +161,8 @@ class GurobiSolver:
             m.write("courtesy-buses.ilp")
             return None
 
+        solution = Solution(self.model)
+
         if verbose:
             vprint("--- X ---")
             for (i, j, k) in A:
@@ -180,20 +187,22 @@ class GurobiSolver:
                     if W[(i, k)].x > EPSILON:
                         vprint(f"{W[(i, k)].varname}={W[(i, k)].x}\t"
                                f"Customer {node_to_string(i)} is brought home by bus {k}")
-
-        solution = WipSolution(self.model)
-
-        print("****GUROBI SOLVER*****")
-        print("****GUROBI SOLVER*****")
-
+        # build solution object
         for (i, j, k) in A:
             if X[(i, j, k)].x > EPSILON:
-                if i == PUB:
-                    t_i = Y[(i, k)].x
-                    solution.append(bus=k, node=i, t=t_i)
-                t_j = Y[(j, k)].x
-                solution.append(bus=k, node=j, t=t_j)
+                # bus k transit from i to j, check when
+                t = Y[(i, k)].x
+                solution.add_passage(i, j, k, t)
 
         return solution
 
+    def __str__(self):
+        customers = "\n".join([f"{c[0]} {c[1]} {c[2]}" for c in self.model.customers])
+        s = f"""\
+            N={self.model.N}
+            Q={self.model.Q}
 
+            CUSTOMERS
+            {customers}
+            """
+        return s
