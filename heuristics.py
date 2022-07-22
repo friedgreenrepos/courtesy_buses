@@ -1,4 +1,4 @@
-from typing import Iterable, List
+from typing import Iterable, List, Dict
 
 from commons import PUB, vprint
 from model import Model
@@ -8,18 +8,18 @@ from validator import Validator
 EPSILON = 10e-3
 
 
-def min_des_arr_time(available_customers: Iterable):
-    """
-    From customers iterable passed as input:
-    - Get the customer with the minimum desired arrival time
-    - Return customer id and customer tuple (xc,yc,ac).
-    """
-    min_time = min([c[2] for c in available_customers if c])
-    for i, c in enumerate(available_customers):
-        if not c:
-            continue
-        if c[2] == min_time:
-            return i+1, c
+# def min_des_arr_time(available_customers: Iterable):
+#     """
+#     From customers iterable passed as input:
+#     - Get the customer with the minimum desired arrival time
+#     - Return customer id and customer tuple (xc,yc,ac).
+#     """
+#     min_time = min([c[2] for c in available_customers if c])
+#     for i, c in enumerate(available_customers):
+#         if not c:
+#             continue
+#         if c[2] == min_time:
+#             return i+1, c
 
 
 def max_des_arr_time(available_customers: Iterable):
@@ -48,18 +48,38 @@ class Heuristic:
 class DummySolver(Heuristic):
 
     def solve(self) -> WipSolution:
-        """ Return greedy solution """
+        """
+        Return dummy solution:
+        - set starting time as max desired arrival time
+        - go to closest customer until bus is full
+        - only when previous bus is full use new one
+        """
 
         class BusInfo:
             def __init__(self, number):
                 self.id = number
                 self.capacity = Q
-                self.edges = []
+                self.nodes = []
 
-            def node(self):
-                if not self.edges:
-                    return PUB
-                return self.edges[-1][1]
+            def last_node(self):
+                if self.nodes:
+                    return self.nodes[-1]
+                else:
+                    return None
+
+        def min_des_arr_time(customers: Dict):
+            """
+            From customers dictionary passed as input:
+            - Get the customer with the minimum desired arrival time
+            - Return customer id and customer tuple (xc,yc,ac).
+            """
+            customer_values = list(customers.values())
+            customer_ids = list(customers.keys())
+
+            min_customer = min(customer_values, key=lambda c: c[2])
+            pos = customer_values.index(min_customer)
+            min_id = customer_ids[pos]
+            return min_id, min_customer
 
         Q = self.model.Q
 
@@ -74,29 +94,29 @@ class DummySolver(Heuristic):
 
         for bus in buses:
             # print(f"Bus {bus.id}")
-            while bus.capacity > 0 and \
-                    list(available_customers.values()).count(None) != len(self.model.customers):
+            while bus.capacity > 0 and available_customers:
 
-                # go to customer with min desired arrival time
-                i, _ = min_des_arr_time(available_customers.values())
+                # start from PUB node
+                if not bus.last_node():
+                    t = starting_time
+                    bus.nodes.append((PUB, t))
+                else:
+                    # go to customer with min desired arrival time
+                    # TODO: find a way to return correct index
+                    next_node, _ = min_des_arr_time(available_customers)
+                    t = bus.last_node()[1] + self.model.time(bus.last_node()[0], next_node)
+                    bus.nodes.append((next_node, t))
 
-                t = starting_time if bus.node() == PUB else bus.edges[-1][2] + self.model.time(bus.edges[-1][0], bus.edges[-1][1])
-                bus.edges.append((bus.node(), i, t))
+                    bus.capacity -= 1
+                    available_customers.pop(next_node)
 
-                bus.capacity -= 1
-                available_customers[i] = None
-
-            if bus.edges:
-                # if there is at least an edge, go back to the PUB
-                bus.edges.append((bus.node(), PUB, bus.edges[-1][2] + self.model.time(bus.node(), PUB)))
-
-        solution = Solution(self.model)
+        solution = WipSolution(self.model)
 
         for bus in buses:
-            for edge in bus.edges:
-                solution.add_passage(edge[0], edge[1], bus.id, edge[2])
+            for (node, t) in bus.nodes:
+                solution.append(bus.id, node, t)
 
-        return solution.to_wip_solution()
+        return solution
 
 
 # def add_route_to_solution(solution: Solution, route: List, bus: int):
@@ -283,7 +303,7 @@ class LocalSearch:
         self.model = model
         self.solution = solution
 
-    def solve(self):
+    def solve(self) -> WipSolution:
         solution = self.solution
         best_result = Validator(self.model, solution).validate()
         vprint(f"[feasible={best_result.feasible}, violations={best_result.hard_violations}, cost={best_result.cost}]")
@@ -346,9 +366,9 @@ class HeuristicSolver:
         self.model = model
         self.heuristic = heuristic
 
-    def solve(self) -> Solution:
+    def solve(self) -> WipSolution:
         # build initial solution
-        initial_solution: WipSolution = DummySolver(self.model).solve()
+        initial_solution = DummySolver(self.model).solve()
 
         # optimize
         if self.heuristic not in ["none", "ls", "test"]:
@@ -364,5 +384,4 @@ class HeuristicSolver:
             # m = MoveNode(solution, 7, 0, 2)
             m.apply()
 
-        #out = solution.to_solution()
         return solution
