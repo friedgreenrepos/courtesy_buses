@@ -9,6 +9,16 @@ class WipSolution:
         self.model = model
         self.trips = [[] for k in range(model.N)]
 
+    def __str__(self):
+        s = ""
+        for bus, bus_trip in enumerate(self.trips):
+            # go on if bus_trip is empty
+            if not bus_trip:
+                continue
+            for (node, t) in bus_trip:
+                s += f"{bus} {node} {t:.1f}\n"
+        return s
+
     def append(self, bus: int, node: int, t: float):
         self.trips[bus].append((node, t))
 
@@ -37,6 +47,21 @@ class WipSolution:
             nodes = nodes + ([node for (node, _) in bus_trip
                               if node != PUB])
         return sorted(nodes)
+
+    def description(self):
+        s = ''
+        for bus, bus_trip in enumerate(self.trips):
+            if not bus_trip:
+                continue
+            s += f"Bus {bus}\n"
+            for i, (node, t) in enumerate(bus_trip):
+                try:
+                    next_node, next_t = bus_trip[i+1]
+                except IndexError:
+                    break
+                s += f"\tt={t:.1f}\t{node_to_string(node)} ->  " \
+                     f"{node_to_string(next_node)} t={next_t:.1f}\n"
+        return s
 
 
 class Solution:
@@ -98,24 +123,6 @@ class Solution:
             s += f"{p[0]} {p[1]} {p[2]} {p[3]:.1f}\n"
         return s
 
-    def get_i_nodes(self):
-        """
-        Return set of "i" nodes for pairs (i,j) in solution
-        PUB node is excluded.
-        """
-        i_nodes = [p[0] for p in self.passages]
-        i_nodes = set(filter(lambda x: x != 0, i_nodes))
-        return i_nodes
-
-    def get_j_nodes(self):
-        """
-        Return set of "j" nodes for pairs (i,j) in solution
-        PUB node is excluded.
-        """
-        j_nodes = [p[1] for p in self.passages]
-        j_nodes = set(filter(lambda x: x != 0, j_nodes))
-        return j_nodes
-
     def get_act_arr_times(self):
         """Return z_i, actual arrival time, for i in customers"""
         return [p[3] for p in self.passages if p[0] != 0]
@@ -129,7 +136,7 @@ class Solution:
         return [(p[0], p[1], p[3]) for p in self.passages
                 if p[2] == bus_id]
 
-    def get_bus_edges(self, bus_id:int):
+    def get_bus_edges(self, bus_id: int):
         """Return trip for bus with bus_id, but edges only (no arrival time)"""
         return [(p[0], p[1]) for p in self.passages
                 if p[2] == bus_id]
