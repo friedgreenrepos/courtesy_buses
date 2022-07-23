@@ -1,4 +1,4 @@
-from commons import PUB
+from commons import PUB, EPSILON
 from model import Model
 from solution import WipSolution
 
@@ -50,7 +50,7 @@ class Validator:
                 for (node, t) in bus_trip:
                     if node == PUB:
                         continue
-                    assert t >= self.model.customer_arr_time(node)
+                    assert t + EPSILON >= self.model.customer_arr_time(node)
 
     def check_H6(self):
         """H6. Y constraint: arrival times are consecutive"""
