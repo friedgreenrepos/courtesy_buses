@@ -118,11 +118,18 @@ def main():
                   f"{solution.description()}"
                   "==========================================")
             result = Validator(model, solution).validate()
-            print("========= SOLUTION (cost) ==========\n"
-                  f"{result.cost}")
+            if result.hard_violations:
+                print("========= SOLUTION (validation) ==========\n")
+                print(f"Violated Constraints: {result.hard_violations}")
+            else:
+                print("========= SOLUTION COST ==========\n"
+                      f"{result.cost}\n"
+                      "==========================================")
 
+            # TODO: add save method to WIP
             if solution_path:
                 solution.save(solution_path)
+            # TODO: update argument to WIP
             if do_draw:
                 draw(model, solution)
 
