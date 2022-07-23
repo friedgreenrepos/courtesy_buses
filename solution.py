@@ -7,7 +7,7 @@ from model import Model
 class WipSolution:
     def __init__(self, model: Model):
         self.model = model
-        self.trips = [[] for k in range(model.N)]
+        self.trips = [[] for _ in range(model.N)]
 
     def __str__(self):
         s = ""
@@ -22,6 +22,7 @@ class WipSolution:
     def append(self, bus: int, node: int, t: float):
         self.trips[bus].append((node, t))
 
+    # TODO: remove if useless
     def to_solution(self):
         s = Solution(self.model)
         for bus, bus_trip in enumerate(self.trips):
@@ -55,10 +56,15 @@ class WipSolution:
                 continue
             s += f"Bus {bus}\n"
             for i, (node, t) in enumerate(bus_trip):
+                # check if there is next node
                 try:
                     next_node, next_t = bus_trip[i+1]
+                # if not go back to pub
                 except IndexError:
+                    s += f"\tt={t:.1f}\t{node_to_string(node)} ->  " \
+                         f"{node_to_string(PUB)}\n"
                     break
+
                 s += f"\tt={t:.1f}\t{node_to_string(node)} ->  " \
                      f"{node_to_string(next_node)} t={next_t:.1f}\n"
         return s
