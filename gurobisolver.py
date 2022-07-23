@@ -183,16 +183,16 @@ class GurobiSolver:
 
         solution = WipSolution(self.model)
 
-        print("****GUROBI SOLVER*****")
-        print("****GUROBI SOLVER*****")
-
         for (i, j, k) in A:
+            print(f"(i, j, k) -> {(i, j, k)}")
             if X[(i, j, k)].x > EPSILON:
                 if i == PUB:
                     t_i = Y[(i, k)].x
+                    print(f"t_i={t_i}")
                     solution.append(bus=k, node=i, t=t_i)
-                t_j = Y[(j, k)].x
-                solution.append(bus=k, node=j, t=t_j)
+                if not j == PUB:
+                    t_j = Y[(j, k)].x
+                    solution.append(bus=k, node=j, t=t_j)
 
         return solution
 
