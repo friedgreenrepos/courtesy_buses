@@ -19,19 +19,12 @@ class WipSolution:
                 s += f"{bus} {node} {t:.1f}\n"
         return s
 
+    def save(self, filename):
+        with Path(filename).open("w") as f:
+            f.write(f"# bus node t\n{str(self)}")
+
     def append(self, bus: int, node: int, t: float):
         self.trips[bus].append((node, t))
-
-    # TODO: remove if useless
-    def to_solution(self):
-        s = Solution(self.model)
-        for bus, bus_trip in enumerate(self.trips):
-            for i, (node, t) in enumerate(bus_trip):
-                if i < len(bus_trip) - 1:
-                    s.add_passage(node, bus_trip[i + 1][0], bus, t)
-                else:
-                    s.add_passage(node, 0, bus, t)
-        return s
 
     def copy(self) -> 'WipSolution':
         wip = WipSolution(self.model)
@@ -59,7 +52,7 @@ class WipSolution:
                 # check if there is next node
                 try:
                     next_node, next_t = bus_trip[i+1]
-                # if not go back to pub
+                # if not, go back to pub
                 except IndexError:
                     s += f"\tt={t:.1f}\t{node_to_string(node)} ->  " \
                          f"{node_to_string(PUB)}\n"

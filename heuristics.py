@@ -102,7 +102,6 @@ class DummySolver(Heuristic):
                     bus.nodes.append((PUB, t))
                 else:
                     # go to customer with min desired arrival time
-                    # TODO: find a way to return correct index
                     next_node, _ = min_des_arr_time(available_customers)
                     t = bus.last_node()[1] + self.model.time(bus.last_node()[0], next_node)
                     bus.nodes.append((next_node, t))
