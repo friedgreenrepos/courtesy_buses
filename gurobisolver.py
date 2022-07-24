@@ -2,7 +2,7 @@ from model import Model
 
 import gurobipy
 from gurobipy import quicksum
-from commons import PUB, eprint, vprint, verbose, node_to_string, EPSILON
+from commons import PUB, vprint, verbose, node_to_string, EPSILON
 from solution import WipSolution
 
 
