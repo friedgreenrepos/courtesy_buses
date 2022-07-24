@@ -141,10 +141,8 @@ def main():
                       f"{result.cost}\n"
                       "==========================================")
 
-            # TODO: add save method to WIP
             if solution_path:
                 solution.save(solution_path)
-            # TODO: update argument to WIP
             if do_draw:
                 draw(model, solution)
 
