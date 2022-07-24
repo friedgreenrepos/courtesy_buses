@@ -26,12 +26,6 @@ class Validator:
         """H2. Take all customers home and only once"""
         assert self.model.customers_set() == set(self.solution.nodes())
 
-    # TODO: get rid of this if useless
-    def check_H3(self):
-        """H3. Flow conservation"""
-        # it's implicit
-        assert True
-
     def check_H4(self):
         """H4. Each bus is used only once, and it starts and ends in PUB"""
         # n.of buses
