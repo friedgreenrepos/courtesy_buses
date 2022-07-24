@@ -40,7 +40,6 @@ class GurobiSolver:
                     continue
                 t[i][j] = self.model.distance(i, j)
 
-                # TODO: introduce parameter/constant for time <-> cost conversion
                 c[i][j] = self.model.omega * t[i][j]
                 print(f"t[{i}][{j}]={t[i][j]}")
 
@@ -181,18 +180,34 @@ class GurobiSolver:
                         vprint(f"{W[(i, k)].varname}={W[(i, k)].x}\t"
                                f"Customer {node_to_string(i)} is brought home by bus {k}")
 
+        def compute_trips(passages):
+            trips = [[(i, j, k, t)] for (i, j, k, t) in passages if i == PUB]
+            n_picked_edges = len(trips)
+            while n_picked_edges < len(passages):
+                for trip in trips:
+                    if trip[-1][1] == PUB:
+                        continue  # closed
+                    for (i, j, k, t) in passages:
+                        if i == trip[-1][1]:
+                            trip.append((i, j, k, t))
+                            n_picked_edges += 1
+                            break
+            return trips
+
+        # build solution object
+        passages = []
+        for (i, j, k) in A:
+            if X[(i, j, k)].x > EPSILON:
+                # bus k transit from i to j, check when
+                t = Y[(i, k)].x
+                passages.append((i, j, k, t))
+
         solution = WipSolution(self.model)
 
-        for (i, j, k) in A:
-            print(f"(i, j, k) -> {(i, j, k)}")
-            if X[(i, j, k)].x > EPSILON:
-                if i == PUB:
-                    t_i = Y[(i, k)].x
-                    print(f"t_i={t_i}")
-                    solution.append(bus=k, node=i, t=t_i)
-                if not j == PUB:
-                    t_j = Y[(j, k)].x
-                    solution.append(bus=k, node=j, t=t_j)
+        trips = compute_trips(passages)
+        for bus_trip in trips:
+            for p in bus_trip:
+                solution.append(bus=p[2], node=p[0], t=p[3])
 
         return solution
 
