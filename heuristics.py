@@ -2,7 +2,7 @@ from typing import Iterable, List, Dict
 
 from commons import PUB, vprint
 from model import Model
-from solution import Solution, WipSolution
+from solution import WipSolution
 from validator import Validator
 
 EPSILON = 10e-3

@@ -1,13 +1,13 @@
 import argparse
 import sys
-from solution import Solution, WipSolution
+from solution import WipSolution
 from model import Model
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from commons import vprint, set_verbose, PUB
 import numpy as np
 from gurobisolver import GurobiSolver
-from heuristics import DummySolver, HeuristicSolver
+from heuristics import HeuristicSolver
 from validator import Validator
 
 
