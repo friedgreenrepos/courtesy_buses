@@ -59,7 +59,7 @@ class Validator:
         """Check all constraints"""
         self.check_H1()
         self.check_H2()
-        self.check_H3()
+        # self.check_H3()
         self.check_H4()
         self.check_H5()
         self.check_H6()
@@ -112,11 +112,11 @@ class Validator:
             result.feasible = False
             result.hard_violations.append("H2")
 
-        try:
-            self.check_H3()
-        except AssertionError:
-            result.feasible = False
-            result.hard_violations.append("H3")
+        # try:
+        #     self.check_H3()
+        # except AssertionError:
+        #     result.feasible = False
+        #     result.hard_violations.append("H3")
 
         try:
             self.check_H4()

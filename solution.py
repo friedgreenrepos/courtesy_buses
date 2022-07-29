@@ -19,6 +19,15 @@ class WipSolution:
                 s += f"{bus} {node} {t:.1f}\n"
         return s
 
+    def pretty_string(self):
+        s = ""
+        for bus, bus_trip in enumerate(self.trips):
+            s += f"-- bus {bus}--\n"
+            for (node, t) in bus_trip:
+                s += f"{node} (t={t:.1f}) -> "
+            s += "\n"
+        return s
+
     def save(self, filename):
         with Path(filename).open("w") as f:
             f.write(f"# bus node t\n{str(self)}")
