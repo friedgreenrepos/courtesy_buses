@@ -198,6 +198,38 @@ def compute_nodes_times(model, nodes, starting_time):
 
 
 class MoveNode:
+    """
+    node: node to move
+    bus: bus that will visit the node
+    pos: visit position of the node within the bus trip.
+         refers to first available position, that is after the PUB.
+
+    Example:
+
+    Case 1
+    ------
+    Bus0 : 0 -> 3 -> 5 -> 7 -> 2 -> 0
+    Bus1 : 0 -> 1 -> 4 -> 6 -> 0
+
+    MoveNode(node=5, bus=1, pos=2) gives // src_bus != dst_bus
+    Bus0 : 0 -> 3 -> 7 -> 2 -> 0
+    Bus1 : 0 -> 1 -> 4 -> 5 -> 6 -> 0
+
+    MoveNode(node=5, bus=0, pos=2) gives // src_bus == dst_bus
+    Bus0 : 0 -> 3 -> 7 -> 5 -> 2 -> 0
+    Bus1 : 0 -> 1 -> 4 -> 6 -> 0
+
+    Case 2
+    ------
+    Bus0 : 0 -> 3 -> 5 -> 7 -> 2 -> 0
+    Bus1 :
+
+    MoveNode(node=5, bus=0, pos=0) gives // src_bus != dst_bus
+    Bus0 : 0 -> 3 -> 7  -> 2 -> 0
+    Bus1 : 0 -> 5 -> 0
+
+    """
+
     def __init__(self, solution: WipSolution, node: int, bus: int, pos: int):
         self.solution = solution
         self.node = node
@@ -217,33 +249,47 @@ class MoveNode:
         if node_bus is None:
             raise AssertionError("Don't know where the node is")
 
+        def compute_trip_visiting_node(trip_nodes_, node_, pos_):
+            """
+            Compute a new sequence of nodes from trip_nodes_ so that
+            node_ is visited at position pos_
+            Works either if node_ is inside trip_nodes_ or not
+            """
+            new_trip_nodes_ = []
+
+            # Was an empty trip, start from PUB
+            if not trip_nodes_:
+                new_trip_nodes_.append(PUB)
+
+            visited = False
+            i_ = 0
+            while i_ < len(trip_nodes_):
+                if len(new_trip_nodes_) == pos_ + 1:
+                    new_trip_nodes_.append(node_)
+                    visited = True
+                else:
+                    n_ = trip_nodes_[i_]
+                    if n_ != node_:
+                        new_trip_nodes_.append(n_)
+                    i_ += 1
+
+            if not visited:
+                # node_ has not been added yet, add it at the end of the trip_nodes_
+                new_trip_nodes_.append(node_)
+
+            return new_trip_nodes_
+
         if node_bus == self.bus:
-            # The source and the destination bus is the same
+            # Source and destination bus are the same
             trip = self.solution.trips[self.bus]
 
-            new_trip_nodes = []
+            new_trip_nodes = compute_trip_visiting_node(
+                [node for (node, t) in trip], self.node, self.pos)
 
-            # first part
-            i = 0
-            while i < self.pos + 1:
-                node, t = trip[i]
-                if node != self.node:
-                    new_trip_nodes.append(node)
-                i += 1
-
-            # second part
-            new_trip_nodes.append(self.node)
-
-            while i < len(trip):
-                node, t = trip[i]
-                if node != self.node:
-                    new_trip_nodes.append(node)
-                i += 1
-
-            # vprint("TripBefore", self.solution.trips[self.bus])
+            # vprint(f"TripBefore (bus={self.bus})", self.solution.trips[self.bus])
             self.solution.trips[self.bus] = compute_nodes_times(
                 self.solution.model, new_trip_nodes, starting_time=trip[0][1])
-            # vprint("TripAfter", self.solution.trips[self.bus])
+            # vprint(f"TripAfter (bus={self.bus})", self.solution.trips[self.bus])
         else:
             src_bus = node_bus
             dst_bus = self.bus
@@ -252,20 +298,27 @@ class MoveNode:
             dst_trip = self.solution.trips[dst_bus]
 
             src_nodes = [node for (node, t) in src_trip if node != self.node]
+            dst_nodes = compute_trip_visiting_node([node for (node, t) in dst_trip], self.node, self.pos)
 
-            dst_nodes = []
-            for i in range(self.pos + 1):
-                dst_nodes.append(dst_trip[i][0])
-
-            dst_nodes.append(self.node)
-
-            for i in range(self.pos + 1, len(dst_trip)):
-                dst_nodes.append(dst_trip[i][0])
-
+            # vprint(f"SrcTripBefore (bus={src_bus})", self.solution.trips[src_bus])
             self.solution.trips[src_bus] = compute_nodes_times(
                 self.solution.model, src_nodes, starting_time=src_trip[0][1])
+            # vprint(f"SrcTripAfter (bus={src_bus})", self.solution.trips[src_bus])
+
+            if dst_trip:
+                # Keep the previous starting time
+                dst_starting_time = dst_trip[0][1]
+            else:
+                # There was no node visited by this bus yet,
+                # start at the optimal time to visit the first
+                # and unique customer visited by the bus
+                dst_starting_time = \
+                    self.solution.model.customer_arr_time(self.node) - self.solution.model.time(PUB, self.node)
+
+            # vprint(f"DstTripBefore (bus={dst_bus})", self.solution.trips[dst_bus])
             self.solution.trips[dst_bus] = compute_nodes_times(
-                self.solution.model, dst_nodes, starting_time=dst_trip[0][1])
+                self.solution.model, dst_nodes, starting_time=dst_starting_time)
+            # vprint(f"DstTripAfter (bus={dst_bus})", self.solution.trips[dst_bus])
 
 
 class OptTimeMove:
@@ -314,8 +367,8 @@ class LocalSearch:
             improved = False
             for dst_bus in range(len(solution.trips)):
                 for src_bus, src_bus_trip in enumerate(solution.trips):
-                    for (src_node, src_t) in src_bus_trip:
-                        for dst_pos in range(len(solution.trips[dst_bus])):
+                    for (src_node, src_t) in src_bus_trip[1:]:
+                        for dst_pos in range(len(solution.trips[dst_bus]) + 1):
                             new_solution = solution.copy()
                             mv = MoveNode(new_solution, src_node, dst_bus, dst_pos)
                             mv.apply()
@@ -328,6 +381,8 @@ class LocalSearch:
 
                             if result.feasible and result.cost < best_result.cost:
                                 vprint(f"*** New best solution {result.cost} ***")
+                                # vprint(f"TripsBefore=\n{solution.pretty_string()}")
+                                # vprint(f"TripsAfter=\n{new_solution.pretty_string()}")
                                 solution = new_solution
                                 best_result = result
                                 improved = True
