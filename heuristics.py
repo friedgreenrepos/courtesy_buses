@@ -200,30 +200,32 @@ def compute_nodes_times(model, nodes, starting_time):
 class MoveNode:
     """
     node: node to move
-    bus: bus that will pass through the node
-    pos: visit position of the node within the bus trip
-    e.g.
+    bus: bus that will visit the node
+    pos: visit position of the node within the bus trip.
+         refers to first available position, that is after the PUB.
+
+    Example:
 
     Case 1
     ------
-    Bus0 : 0 -> 3 -> 5 -> 7 -> 2
+    Bus0 : 0 -> 3 -> 5 -> 7 -> 2 -> 0
     Bus1 : 0 -> 1 -> 4 -> 6 -> 0
 
-    MoveNode(node=5, bus=1, pos=2) gives // src_bus == dst_bus
-    Bus0 : 0 -> 3 -> 7 -> 2
+    MoveNode(node=5, bus=1, pos=2) gives // src_bus != dst_bus
+    Bus0 : 0 -> 3 -> 7 -> 2 -> 0
     Bus1 : 0 -> 1 -> 4 -> 5 -> 6 -> 0
 
-    MoveNode(node=5, bus=0, pos=2) gives // src_bus != dst_bus
-    Bus0 : 0 -> 3 -> 7 -> 5 -> 2
+    MoveNode(node=5, bus=0, pos=2) gives // src_bus == dst_bus
+    Bus0 : 0 -> 3 -> 7 -> 5 -> 2 -> 0
     Bus1 : 0 -> 1 -> 4 -> 6 -> 0
 
     Case 2
     ------
-    Bus0 : 0 -> 3 -> 5 -> 7 -> 2
+    Bus0 : 0 -> 3 -> 5 -> 7 -> 2 -> 0
     Bus1 :
 
     MoveNode(node=5, bus=0, pos=0) gives // src_bus != dst_bus
-    Bus0 : 0 -> 3 -> 7  -> 2
+    Bus0 : 0 -> 3 -> 7  -> 2 -> 0
     Bus1 : 0 -> 5 -> 0
 
     """
@@ -247,10 +249,12 @@ class MoveNode:
         if node_bus is None:
             raise AssertionError("Don't know where the node is")
 
-        # Compute a new sequence of nodes from trip_nodes_ so that
-        # node_ is visited at position pos_
-        # Works either if node_ is inside trip_nodes_ or not
         def compute_trip_visiting_node(trip_nodes_, node_, pos_):
+            """
+            Compute a new sequence of nodes from trip_nodes_ so that
+            node_ is visited at position pos_
+            Works either if node_ is inside trip_nodes_ or not
+            """
             new_trip_nodes_ = []
 
             # Was an empty trip, start from PUB
@@ -276,7 +280,7 @@ class MoveNode:
             return new_trip_nodes_
 
         if node_bus == self.bus:
-            # The source and the destination bus is the same
+            # Source and destination bus are the same
             trip = self.solution.trips[self.bus]
 
             new_trip_nodes = compute_trip_visiting_node(
