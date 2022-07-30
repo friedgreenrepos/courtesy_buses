@@ -21,19 +21,19 @@ EPSILON = 10e-3
 #         if c[2] == min_time:
 #             return i+1, c
 
+def max_des_arr_time(customers: Dict):
+    """
+    From customers dictionary passed as input:
+    - Get the customer with the maximum desired arrival time
+    - Return customer id and customer tuple (xc,yc,ac).
+    """
+    customer_values = list(customers.values())
+    customer_ids = list(customers.keys())
 
-def max_des_arr_time(available_customers: Iterable):
-    """
-    From customers iterable passed as input:
-    - Get the customer with the maximum desired arrival time.
-    - Return customer id and customer tuple (xc,yc,ac) .
-    """
-    max_time = max([c[2] for c in available_customers if c])
-    for i, c in enumerate(available_customers):
-        if not c:
-            continue
-        if c[2] == max_time:
-            return i+1, c
+    max_customer = max(customer_values, key=lambda c: c[2])
+    pos = customer_values.index(max_customer)
+    min_id = customer_ids[pos]
+    return min_id, max_customer
 
 
 class Heuristic:
@@ -89,7 +89,7 @@ class DummySolver(Heuristic):
 
         # starting time from PUB coincides with max des_arr_time,
         # in that way we're sure all time windows are respected
-        _, max_c = max_des_arr_time(available_customers.values())
+        _, max_c = max_des_arr_time(available_customers)
         starting_time = max_c[2]
 
         for bus in buses:
@@ -279,8 +279,8 @@ class MoveNode:
 
             return new_trip_nodes_
 
+        # CASE 1: Source and destination bus are the same
         if node_bus == self.bus:
-            # Source and destination bus are the same
             trip = self.solution.trips[self.bus]
 
             new_trip_nodes = compute_trip_visiting_node(
@@ -290,6 +290,8 @@ class MoveNode:
             self.solution.trips[self.bus] = compute_nodes_times(
                 self.solution.model, new_trip_nodes, starting_time=trip[0][1])
             # vprint(f"TripAfter (bus={self.bus})", self.solution.trips[self.bus])
+
+        # CASE 2: Source and destination bus are different
         else:
             src_bus = node_bus
             dst_bus = self.bus
@@ -301,6 +303,7 @@ class MoveNode:
             dst_nodes = compute_trip_visiting_node([node for (node, t) in dst_trip], self.node, self.pos)
 
             # vprint(f"SrcTripBefore (bus={src_bus})", self.solution.trips[src_bus])
+            src_starting_time = max()
             self.solution.trips[src_bus] = compute_nodes_times(
                 self.solution.model, src_nodes, starting_time=src_trip[0][1])
             # vprint(f"SrcTripAfter (bus={src_bus})", self.solution.trips[src_bus])
