@@ -1,3 +1,4 @@
+import operator
 from typing import Iterable, List, Dict
 
 from commons import PUB, vprint
@@ -6,34 +7,6 @@ from solution import WipSolution
 from validator import Validator
 
 EPSILON = 10e-3
-
-
-# def min_des_arr_time(available_customers: Iterable):
-#     """
-#     From customers iterable passed as input:
-#     - Get the customer with the minimum desired arrival time
-#     - Return customer id and customer tuple (xc,yc,ac).
-#     """
-#     min_time = min([c[2] for c in available_customers if c])
-#     for i, c in enumerate(available_customers):
-#         if not c:
-#             continue
-#         if c[2] == min_time:
-#             return i+1, c
-
-def max_des_arr_time(customers: Dict):
-    """
-    From customers dictionary passed as input:
-    - Get the customer with the maximum desired arrival time
-    - Return customer id and customer tuple (xc,yc,ac).
-    """
-    customer_values = list(customers.values())
-    customer_ids = list(customers.keys())
-
-    max_customer = max(customer_values, key=lambda c: c[2])
-    pos = customer_values.index(max_customer)
-    min_id = customer_ids[pos]
-    return min_id, max_customer
 
 
 class Heuristic:
@@ -80,6 +53,20 @@ class DummySolver(Heuristic):
             pos = customer_values.index(min_customer)
             min_id = customer_ids[pos]
             return min_id, min_customer
+
+        def max_des_arr_time(customers: Dict):
+            """
+            From customers dictionary passed as input:
+            - Get the customer with the maximum desired arrival time
+            - Return customer id and customer tuple (xc,yc,ac).
+            """
+            customer_values = list(customers.values())
+            customer_ids = list(customers.keys())
+
+            max_customer = max(customer_values, key=lambda c: c[2])
+            pos = customer_values.index(max_customer)
+            min_id = customer_ids[pos]
+            return min_id, max_customer
 
         Q = self.model.Q
 
@@ -279,6 +266,17 @@ class MoveNode:
 
             return new_trip_nodes_
 
+        def max_des_arr_time(nodes: List):
+            """ Return max desired arrival time from list of nodes """
+            customers = {}
+            for node in nodes:
+                if node == PUB:
+                    continue
+                customers[node] = self.solution.model.customers[node-1][2]
+            max_time = max(customers.values())
+            # max_id = max(customers.items(), key=operator.itemgetter(1))[0]
+            return max_time
+
         # CASE 1: Source and destination bus are the same
         if node_bus == self.bus:
             trip = self.solution.trips[self.bus]
@@ -303,9 +301,10 @@ class MoveNode:
             dst_nodes = compute_trip_visiting_node([node for (node, t) in dst_trip], self.node, self.pos)
 
             # vprint(f"SrcTripBefore (bus={src_bus})", self.solution.trips[src_bus])
-            src_starting_time = max()
+            src_starting_time = max_des_arr_time(src_nodes)
+
             self.solution.trips[src_bus] = compute_nodes_times(
-                self.solution.model, src_nodes, starting_time=src_trip[0][1])
+                self.solution.model, src_nodes, starting_time=src_starting_time)
             # vprint(f"SrcTripAfter (bus={src_bus})", self.solution.trips[src_bus])
 
             if dst_trip:
@@ -376,6 +375,12 @@ class LocalSearch:
                             mv = MoveNode(new_solution, src_node, dst_bus, dst_pos)
                             mv.apply()
 
+                            mv_time_1 = OptTimeMove(new_solution, src_bus)
+                            mv_time_1.apply()
+
+                            mv_time_2 = OptTimeMove(new_solution, dst_bus)
+                            mv_time_2.apply()
+
                             # check validity and improvement
                             result = Validator(self.model, new_solution).validate()
                             vprint(f"MoveNode(node={mv.node}, bus={mv.bus}, pos={mv.pos}) -> "
@@ -398,21 +403,21 @@ class LocalSearch:
                         break
                 if improved:
                     break
-            for bus, trip in enumerate(self.solution.trips):
-                if not trip:
-                    continue
-                mv = OptTimeMove(solution, bus)
-                mv.apply()
-
-                result = Validator(self.model, solution).validate()
-                vprint(f"OptTimeMove(bus={mv.bus}) -> "
-                       f"[feasible={result.feasible}, violations={result.hard_violations}, cost={result.cost}]"
-                       f"\t// best_cost={best_result.cost}")
-
-                if result.feasible and result.cost < best_result.cost:
-                    vprint(f"*** New best solution {result.cost} ***")
-                    best_result = result
-                    improved = True
+            # for bus, trip in enumerate(self.solution.trips):
+            #     if not trip:
+            #         continue
+            #     mv = OptTimeMove(solution, bus)
+            #     mv.apply()
+            #
+            #     result = Validator(self.model, solution).validate()
+            #     vprint(f"OptTimeMove(bus={mv.bus}) -> "
+            #            f"[feasible={result.feasible}, violations={result.hard_violations}, cost={result.cost}]"
+            #            f"\t// best_cost={best_result.cost}")
+            #
+            #     if result.feasible and result.cost < best_result.cost:
+            #         vprint(f"*** New best solution {result.cost} ***")
+            #         best_result = result
+            #         improved = True
         vprint("==== LS END ====")
 
         return solution
