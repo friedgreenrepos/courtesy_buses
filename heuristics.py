@@ -267,13 +267,19 @@ class MoveNode:
             return new_trip_nodes_
 
         def max_des_arr_time(nodes: List):
-            """ Return max desired arrival time from list of nodes """
+            """
+            Return max desired arrival time from list of nodes.
+            If list is empty or contains PUB only return None.
+            """
             customers = {}
             for node in nodes:
                 if node == PUB:
                     continue
                 customers[node] = self.solution.model.customers[node-1][2]
-            max_time = max(customers.values())
+            try:
+                max_time = max(customers.values())
+            except ValueError:
+                max_time = None
             # max_id = max(customers.items(), key=operator.itemgetter(1))[0]
             return max_time
 
@@ -300,12 +306,16 @@ class MoveNode:
             src_nodes = [node for (node, t) in src_trip if node != self.node]
             dst_nodes = compute_trip_visiting_node([node for (node, t) in dst_trip], self.node, self.pos)
 
-            # vprint(f"SrcTripBefore (bus={src_bus})", self.solution.trips[src_bus])
-            src_starting_time = max_des_arr_time(src_nodes)
+            vprint(f"SrcTripBefore (bus={src_bus})", self.solution.trips[src_bus])
+
+            # re-compute starting time based on new nodes.
+            # if src_nodes list is empty use previous starting time
+            src_starting_time = max_des_arr_time(src_nodes) or src_trip[0][1]
 
             self.solution.trips[src_bus] = compute_nodes_times(
                 self.solution.model, src_nodes, starting_time=src_starting_time)
-            # vprint(f"SrcTripAfter (bus={src_bus})", self.solution.trips[src_bus])
+
+            vprint(f"SrcTripAfter (bus={src_bus})", self.solution.trips[src_bus])
 
             if dst_trip:
                 # Keep the previous starting time
@@ -375,11 +385,11 @@ class LocalSearch:
                             mv = MoveNode(new_solution, src_node, dst_bus, dst_pos)
                             mv.apply()
 
-                            mv_time_1 = OptTimeMove(new_solution, src_bus)
-                            mv_time_1.apply()
+                            mv_time_src = OptTimeMove(new_solution, src_bus)
+                            mv_time_src.apply()
 
-                            mv_time_2 = OptTimeMove(new_solution, dst_bus)
-                            mv_time_2.apply()
+                            mv_time_dst = OptTimeMove(new_solution, dst_bus)
+                            mv_time_dst.apply()
 
                             # check validity and improvement
                             result = Validator(self.model, new_solution).validate()
