@@ -18,6 +18,94 @@ class Heuristic:
         pass
 
 
+class BusInfo:
+    def __init__(self, number, Q):
+        self.id = number
+        self.capacity = Q
+        self.nodes = []
+
+    def last_node(self):
+        if self.nodes:
+            return self.nodes[-1]
+        else:
+            return None
+
+
+def min_des_arr_time(customers: Dict):
+    """
+    From customers dictionary passed as input:
+    - Get the customer with the minimum desired arrival time
+    - Return customer id and customer tuple (xc,yc,ac).
+    """
+    customer_values = list(customers.values())
+    customer_ids = list(customers.keys())
+
+    min_customer = min(customer_values, key=lambda c: c[2])
+    pos = customer_values.index(min_customer)
+    min_id = customer_ids[pos]
+    return min_id, min_customer
+
+
+def max_des_arr_time(customers: Dict):
+    """
+    From customers dictionary passed as input:
+    - Get the customer with the maximum desired arrival time
+    - Return customer id and customer tuple (xc,yc,ac).
+    """
+    customer_values = list(customers.values())
+    customer_ids = list(customers.keys())
+
+    max_customer = max(customer_values, key=lambda c: c[2])
+    pos = customer_values.index(max_customer)
+    max_id = customer_ids[pos]
+    return max_id, max_customer
+
+
+class SimpleSolver(Heuristic):
+
+    def solve(self) -> WipSolution:
+        """
+        Iterate through all buses adding one customer at a time per bus.
+        Choose the closest customer everytime.
+        """
+        Q = self.model.Q
+
+        buses = [BusInfo(i, Q) for i in range(self.model.N)]
+
+        available_customers = {i + 1: c for i, c in enumerate(self.model.customers)}
+
+        # starting time from PUB coincides with max des_arr_time,
+        # in that way we're sure all time windows are respected
+        _, max_c = max_des_arr_time(available_customers)
+        starting_time = max_c[2]
+
+        while available_customers:
+            # print(f"available customers: {available_customers}")
+            for bus in buses:
+                # print(f"Bus {bus.id}")
+                if bus.capacity > 0 and available_customers:
+                    # start from PUB node
+                    if not bus.last_node():
+                        t = starting_time
+                        bus.nodes.append((PUB, t))
+
+                    # go to customer with min desired arrival time
+                    next_node, _ = min_des_arr_time(available_customers)
+                    t = bus.last_node()[1] + self.model.time(bus.last_node()[0], next_node)
+                    bus.nodes.append((next_node, t))
+
+                    bus.capacity -= 1
+                    available_customers.pop(next_node)
+
+        solution = WipSolution(self.model)
+
+        for bus in buses:
+            for (node, t) in bus.nodes:
+                solution.append(bus.id, node, t)
+
+        return solution
+
+
 class DummySolver(Heuristic):
 
     def solve(self) -> WipSolution:
@@ -28,49 +116,9 @@ class DummySolver(Heuristic):
         - only when previous bus is full use new one
         """
 
-        class BusInfo:
-            def __init__(self, number):
-                self.id = number
-                self.capacity = Q
-                self.nodes = []
-
-            def last_node(self):
-                if self.nodes:
-                    return self.nodes[-1]
-                else:
-                    return None
-
-        def min_des_arr_time(customers: Dict):
-            """
-            From customers dictionary passed as input:
-            - Get the customer with the minimum desired arrival time
-            - Return customer id and customer tuple (xc,yc,ac).
-            """
-            customer_values = list(customers.values())
-            customer_ids = list(customers.keys())
-
-            min_customer = min(customer_values, key=lambda c: c[2])
-            pos = customer_values.index(min_customer)
-            min_id = customer_ids[pos]
-            return min_id, min_customer
-
-        def max_des_arr_time(customers: Dict):
-            """
-            From customers dictionary passed as input:
-            - Get the customer with the maximum desired arrival time
-            - Return customer id and customer tuple (xc,yc,ac).
-            """
-            customer_values = list(customers.values())
-            customer_ids = list(customers.keys())
-
-            max_customer = max(customer_values, key=lambda c: c[2])
-            pos = customer_values.index(max_customer)
-            min_id = customer_ids[pos]
-            return min_id, max_customer
-
         Q = self.model.Q
 
-        buses = [BusInfo(i) for i in range(self.model.N)]
+        buses = [BusInfo(i, Q) for i in range(self.model.N)]
 
         available_customers = {i + 1: c for i, c in enumerate(self.model.customers)}
 
@@ -382,23 +430,24 @@ class LocalSearch:
                     for (src_node, src_t) in src_bus_trip[1:]:
                         for dst_pos in range(len(solution.trips[dst_bus]) + 1):
                             new_solution = solution.copy()
+                            vprint(f"initial solution: {new_solution.trips}")
                             mv = MoveNode(new_solution, src_node, dst_bus, dst_pos)
                             mv.apply()
-
                             vprint(f"MoveNode(node={mv.node}, bus={mv.bus}, pos={mv.pos})")
-
-                            mv_time_dst = OptTimeMove(new_solution, dst_bus)
-                            mv_time_dst.apply()
-
-                            if src_bus != dst_bus:
-                                mv_time_src = OptTimeMove(new_solution, src_bus)
-                                mv_time_src.apply()
 
                             # check validity and improvement
                             result = Validator(self.model, new_solution).validate()
-                            vprint(f"MoveNode(node={mv.node}, bus={mv.bus}, pos={mv.pos}), "
-                                   f"OptTime(bus={src_bus}), "
-                                   f"OptTime(bus={dst_bus}) ->\n"
+
+                            # if MoveNode creates a feasible solution, use OptTime
+                            if result.feasible:
+                                mv_time_dst = OptTimeMove(new_solution, dst_bus)
+                                mv_time_dst.apply()
+
+                                if src_bus != dst_bus:
+                                    mv_time_src = OptTimeMove(new_solution, src_bus)
+                                    mv_time_src.apply()
+
+                            vprint(f"MoveNode(node={mv.node}, bus={mv.bus}, pos={mv.pos}) ->"
                                    f"[feasible={result.feasible}, violations={result.hard_violations}, cost={result.cost}]"
                                    f"\t// current best cost={best_result.cost}")
 
@@ -446,6 +495,7 @@ class HeuristicSolver:
     def solve(self) -> WipSolution:
         # build initial solution
         initial_solution = DummySolver(self.model).solve()
+        # initial_solution = SimpleSolver(self.model).solve()
 
         # optimize
         if self.heuristic not in ["none", "ls", "test"]:
