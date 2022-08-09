@@ -1,6 +1,6 @@
 import argparse
 import sys
-from solution import WipSolution
+from solution import Solution
 from model import Model
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -11,7 +11,7 @@ from heuristics import HeuristicSolver
 from validator import Validator
 
 
-def draw(model: Model, solution: WipSolution):
+def draw(model: Model, solution: Solution):
     """ Draw model solution in a new window"""
 
     # customers' lists of x and y coordinates

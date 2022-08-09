@@ -1,6 +1,6 @@
 from commons import PUB, EPSILON
 from model import Model
-from solution import WipSolution
+from solution import Solution
 
 
 class ValidationResult:
@@ -11,7 +11,7 @@ class ValidationResult:
 
 
 class Validator:
-    def __init__(self, model: 'Model', solution: 'WipSolution'):
+    def __init__(self, model: 'Model', solution: 'Solution'):
         self.model = model
         self.solution = solution
 

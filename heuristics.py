@@ -2,7 +2,7 @@ from typing import List, Dict
 
 from commons import PUB, vprint
 from model import Model
-from solution import WipSolution
+from solution import Solution
 from validator import Validator
 
 EPSILON = 10e-3
@@ -62,7 +62,7 @@ def max_des_arr_time(customers: Dict):
 
 class SimpleSolver(Heuristic):
 
-    def solve(self) -> WipSolution:
+    def solve(self) -> Solution:
         """
         Compute simple greedy solution:
         - iterate through all buses adding one customer at a time per bus.
@@ -97,7 +97,7 @@ class SimpleSolver(Heuristic):
                     bus.capacity -= 1
                     available_customers.pop(next_node)
 
-        solution = WipSolution(self.model)
+        solution = Solution(self.model)
 
         for bus in buses:
             for (node, t) in bus.nodes:
@@ -108,7 +108,7 @@ class SimpleSolver(Heuristic):
 
 class DummySolver(Heuristic):
 
-    def solve(self) -> WipSolution:
+    def solve(self) -> Solution:
         """
         Compute dummy greedy solution:
         - set starting time as max desired arrival time
@@ -144,7 +144,7 @@ class DummySolver(Heuristic):
                     bus.capacity -= 1
                     available_customers.pop(next_node)
 
-        solution = WipSolution(self.model)
+        solution = Solution(self.model)
 
         for bus in buses:
             for (node, t) in bus.nodes:
@@ -196,7 +196,7 @@ class MoveNode:
 
     """
 
-    def __init__(self, solution: WipSolution, node: int, bus: int, pos: int):
+    def __init__(self, solution: Solution, node: int, bus: int, pos: int):
         self.solution = solution
         self.node = node
         self.bus = bus
@@ -320,7 +320,7 @@ class OptTimeMove:
     - take the max between these times
     """
 
-    def __init__(self, solution: WipSolution, bus: int):
+    def __init__(self, solution: Solution, bus: int):
         self.solution = solution
         self.bus = bus
 
@@ -343,11 +343,11 @@ class OptTimeMove:
 
 
 class LocalSearch:
-    def __init__(self, model: Model, solution: WipSolution):
+    def __init__(self, model: Model, solution: Solution):
         self.model = model
         self.solution = solution
 
-    def solve(self) -> WipSolution:
+    def solve(self) -> Solution:
         solution = self.solution
         best_result = Validator(self.model, solution).validate()
         vprint(f"[feasible={best_result.feasible}, violations={best_result.hard_violations}, cost={best_result.cost}]")
@@ -424,10 +424,10 @@ class HeuristicSolver:
         self.model = model
         self.heuristic = heuristic
 
-    def solve(self) -> WipSolution:
+    def solve(self) -> Solution:
         # build initial solution
-        initial_solution = DummySolver(self.model).solve()
-        # initial_solution = SimpleSolver(self.model).solve()
+        # initial_solution = DummySolver(self.model).solve()
+        initial_solution = SimpleSolver(self.model).solve()
 
         # optimize
         if self.heuristic not in ["none", "ls"]:

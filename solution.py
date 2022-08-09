@@ -4,7 +4,7 @@ from commons import node_to_string, PUB
 from model import Model
 
 
-class WipSolution:
+class Solution:
     def __init__(self, model: Model):
         self.model = model
         self.trips = [[] for _ in range(model.N)]
@@ -35,8 +35,8 @@ class WipSolution:
     def append(self, bus: int, node: int, t: float):
         self.trips[bus].append((node, t))
 
-    def copy(self) -> 'WipSolution':
-        wip = WipSolution(self.model)
+    def copy(self) -> 'Solution':
+        wip = Solution(self.model)
         wip.trips = [
             list(trip)
             for trip in self.trips

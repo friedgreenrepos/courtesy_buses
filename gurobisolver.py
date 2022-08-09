@@ -3,7 +3,7 @@ from model import Model
 import gurobipy
 from gurobipy import quicksum
 from commons import PUB, vprint, verbose, node_to_string, EPSILON
-from solution import WipSolution
+from solution import Solution
 
 
 class GurobiSolver:
@@ -202,7 +202,7 @@ class GurobiSolver:
                 t = Y[(i, k)].x
                 passages.append((i, j, k, t))
 
-        solution = WipSolution(self.model)
+        solution = Solution(self.model)
 
         trips = compute_trips(passages)
         for bus_trip in trips:
