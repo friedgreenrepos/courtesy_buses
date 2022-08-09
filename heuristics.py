@@ -1,5 +1,4 @@
-import operator
-from typing import Iterable, List, Dict
+from typing import List, Dict
 
 from commons import PUB, vprint
 from model import Model
@@ -65,8 +64,9 @@ class SimpleSolver(Heuristic):
 
     def solve(self) -> WipSolution:
         """
-        Iterate through all buses adding one customer at a time per bus.
-        Choose the closest customer everytime.
+        Compute simple greedy solution:
+        - iterate through all buses adding one customer at a time per bus.
+        - choose the closest customer everytime.
         """
         Q = self.model.Q
 
@@ -110,7 +110,7 @@ class DummySolver(Heuristic):
 
     def solve(self) -> WipSolution:
         """
-        Return dummy solution:
+        Compute dummy greedy solution:
         - set starting time as max desired arrival time
         - go to closest customer until bus is full
         - only when previous bus is full use new one
@@ -151,75 +151,6 @@ class DummySolver(Heuristic):
                 solution.append(bus.id, node, t)
 
         return solution
-
-
-# def add_route_to_solution(solution: Solution, route: List, bus: int):
-#     """
-#     Add route to solution passed as input. Route has to be the full route of a bus.
-#     Route is a list of nodes [a,b,c,a] that is transformed into passages
-#     of form [(a,b,t1),(b,c,t2),(c,a,t3)] in order to be added to a Solution object.
-#     """
-#     model = solution.model
-#     route_customers = [model.customers[node - 1] for node in route[1:-1]]
-#     _, max_c = get_max_des_arr_time(route_customers)
-#     starting_time = max_c[2]
-#
-#     for i, node in enumerate(route):
-#         t = starting_time if node == PUB else solution.passages[-1][3] + model.time(solution.passages[-1][1], route[i+1])
-#         try:
-#             solution.add_passage(node, route[i+1], bus, t)
-#         except:
-#             break
-#     return solution
-#
-#
-# class TwoOpt:
-#     def __init__(self, model: Model, solution: Solution, bus: int):
-#         self.model = model
-#         self.solution = solution
-#         self.bus = bus
-#
-#     def apply_opt(self):
-#         """Look for improvement in route by swapping edges"""
-#
-#         def move(i: int, j: int, route: List):
-#             """Swap edges (i,i+1), (j,j+1)"""
-#             new_route = route[:]
-#             new_route[i:j] = route[j - 1:i - 1:-1]
-#             return new_route
-#
-#         route = self.solution.get_bus_route(self.bus)
-#         print(f"starting route ==> {route}")
-#         validator = Validator(self.model, self.solution)
-#         best = route
-#         improved = True
-#         while improved:
-#             improved = False
-#             for i in range(1, len(route)-2):
-#                 for j in range(i+1, len(route)):
-#                     if j-i == 1:
-#                         continue
-#
-#                     new_route = move(i, j, route)
-#                     print(f"new route: {new_route}")
-#
-#                     new_solution = Solution(self.model)
-#                     new_solution = add_route_to_solution(new_solution, new_route, self.bus)
-#                     new_validator = Validator(self.model, new_solution)
-#                     try:
-#                         new_validator.validate()
-#                     except:
-#                         continue
-#                     print(f"old cost: {validator.get_total_cost()}")
-#                     print(f"new cost: {new_validator.get_total_cost()}")
-#                     if new_validator.get_total_cost() < validator.get_total_cost():
-#                         best = new_route
-#                         print(f"current best route ==> {best}")
-#                         improved = True
-#             route = best
-#             solution = Solution(self.model)
-#             validator = Validator(self.model, add_route_to_solution(solution, route, self.bus))
-#         return best
 
 
 def compute_nodes_times(model, nodes, starting_time):
@@ -382,6 +313,12 @@ class MoveNode:
 
 
 class OptTimeMove:
+    """
+    Optimize starting time of a bus trip in solution:
+    - loop through nodes and arrival times in bus trip
+    - compute minimum starting time for each node, in order to respect time window
+    - take the max between these times
+    """
 
     def __init__(self, solution: WipSolution, bus: int):
         self.solution = solution
@@ -395,11 +332,6 @@ class OptTimeMove:
             a = self.solution.model.customer_arr_time(node)
             trip_time = t - old_starting_time
             new_starting_time = max(new_starting_time, a - trip_time)
-            # print(f"Node -> {node}")
-            # print(f"a -> {a}")
-            # print(f"t -> {t}")
-            # print(f"trip time -> {trip_time}")
-            # print(f"New starting time -> {new_starting_time}")
 
         new_starting_time += EPSILON
         vprint("OptTime: TripBefore", self.solution.trips[self.bus])
@@ -498,17 +430,12 @@ class HeuristicSolver:
         # initial_solution = SimpleSolver(self.model).solve()
 
         # optimize
-        if self.heuristic not in ["none", "ls", "test"]:
+        if self.heuristic not in ["none", "ls"]:
             raise NotImplementedError()
 
         solution = initial_solution
 
         if self.heuristic == "ls":
             solution = LocalSearch(self.model, initial_solution).solve()
-        elif self.heuristic == "test":
-            m = MoveNode(solution, 2, 0, 2)
-            # m = MoveNode(solution, 3, 0, 3)
-            # m = MoveNode(solution, 7, 0, 2)
-            m.apply()
 
         return solution
