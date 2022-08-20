@@ -1,3 +1,4 @@
+import random
 from typing import List, Dict
 
 from commons import PUB, vprint
@@ -143,6 +144,50 @@ class DummySolver(Heuristic):
 
                     bus.capacity -= 1
                     available_customers.pop(next_node)
+
+        solution = Solution(self.model)
+
+        for bus in buses:
+            for (node, t) in bus.nodes:
+                solution.append(bus.id, node, t)
+
+        return solution
+
+
+class GreedySolver(Heuristic):
+
+    def solve(self) -> Solution:
+        """ Assign random bus to each customer """
+        Q = self.model.Q
+
+        buses = [BusInfo(i, Q) for i in range(self.model.N)]
+
+        available_customers = {i + 1: c for i, c in enumerate(self.model.customers)}
+
+        # starting time from PUB coincides with max desired arrival time,
+        # in that way we're sure all time windows are respected
+        _, max_c = max_des_arr_time(available_customers)
+        starting_time = max_c[2]
+
+        while available_customers:
+
+            # pick bus at random among buses that are not full
+            available_buses = list(filter(lambda b: b.capacity > 0, buses))
+            bus = random.choice(available_buses)
+
+            # if bus is empty, start from PUB node
+            if not bus.last_node():
+                t = starting_time
+                bus.nodes.append((PUB, t))
+
+            # pick customer at random
+            next_node, _ = random.choice(list(available_customers.items()))
+            t = bus.last_node()[1] + self.model.time(bus.last_node()[0], next_node)
+            bus.nodes.append((next_node, t))
+
+            # update bus and customers
+            bus.capacity -= 1
+            available_customers.pop(next_node)
 
         solution = Solution(self.model)
 
@@ -425,17 +470,24 @@ class HeuristicSolver:
         self.heuristic = heuristic
 
     def solve(self) -> Solution:
-        # build initial solution
-        # initial_solution = DummySolver(self.model).solve()
-        initial_solution = SimpleSolver(self.model).solve()
 
-        # optimize
         if self.heuristic not in ["none", "ls"]:
             raise NotImplementedError()
 
-        solution = initial_solution
+        solution = GreedySolver(self.model).solve()
+
+        # TODO: multistart should be optional
+        initial_solutions = [GreedySolver(self.model).solve() for _ in range(10)]
 
         if self.heuristic == "ls":
-            solution = LocalSearch(self.model, initial_solution).solve()
+            best_sol_ls = None
+            best_cost_ls = None
+            for initial_solution in initial_solutions:
+                sol_ls = LocalSearch(self.model, initial_solution).solve()
+                v = Validator(self.model, sol_ls)
+                if not best_sol_ls or v.total_cost() < best_cost_ls:
+                    best_cost_ls = v.total_cost()
+                    best_sol_ls = sol_ls
+            solution = best_sol_ls
 
         return solution
