@@ -1,4 +1,5 @@
 import random
+import time
 from typing import List, Dict
 
 from commons import PUB, vprint
@@ -465,29 +466,36 @@ class LocalSearch:
 
 
 class HeuristicSolver:
-    def __init__(self, model: Model, heuristic="none"):
+    def __init__(self, model: Model, heuristic="none", max_t=60):
         self.model = model
         self.heuristic = heuristic
+        self.max_t = float(max_t)
 
     def solve(self) -> Solution:
-
-        if self.heuristic not in ["none", "ls"]:
+        if self.heuristic not in ["none", "ls", "ls-ms"]:
             raise NotImplementedError()
 
-        solution = GreedySolver(self.model).solve()
+        # build initial solution
+        initial_solution = GreedySolver(self.model).solve()
 
-        # TODO: multistart should be optional
-        initial_solutions = [GreedySolver(self.model).solve() for _ in range(10)]
+        # greedy solution
+        solution = initial_solution
 
+        # local search
         if self.heuristic == "ls":
+            solution = LocalSearch(self.model, initial_solution).solve()
+
+        # local search multi-start
+        if self.heuristic == "ls-ms":
+            end_time = time.time() + self.max_t
             best_sol_ls = None
             best_cost_ls = None
-            for initial_solution in initial_solutions:
+            while time.time() < end_time:
+                initial_solution = GreedySolver(self.model).solve()
                 sol_ls = LocalSearch(self.model, initial_solution).solve()
                 v = Validator(self.model, sol_ls)
                 if not best_sol_ls or v.total_cost() < best_cost_ls:
                     best_cost_ls = v.total_cost()
                     best_sol_ls = sol_ls
             solution = best_sol_ls
-
         return solution

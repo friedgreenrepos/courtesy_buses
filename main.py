@@ -97,6 +97,10 @@ def main():
                         dest="heuristic", metavar="HEURISTIC",
                         help="solve using heuristic")
 
+    parser.add_argument("-t", "--max_time",
+                        dest="max_time", metavar="MAXTIME",
+                        help="ls multi-start max time")
+
     # positional arguments
     # model (in)
     # solution (out)
@@ -109,6 +113,7 @@ def main():
     model_path = parsed.get("model")
     solution_path = parsed.get("solution")
     heuristic = parsed.get("heuristic")
+    max_t = parsed.get("max_time")
 
     model = Model()
     if model.parse(model_path):
@@ -119,8 +124,12 @@ def main():
         # model.dump_information()
 
         if heuristic:
-            heuristic_solver = HeuristicSolver(model, heuristic)
-            solution = heuristic_solver.solve()
+            if max_t:
+                heuristic_solver = HeuristicSolver(model, heuristic, max_t)
+                solution = heuristic_solver.solve()
+            else:
+                heuristic_solver = HeuristicSolver(model, heuristic)
+                solution = heuristic_solver.solve()
         else:
             gurobi_solver = GurobiSolver(model)
             solution = gurobi_solver.solve()
