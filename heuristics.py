@@ -209,7 +209,7 @@ def compute_nodes_times(model, nodes, starting_time):
     return out
 
 
-class MoveNode:
+class MoveAndOptTime:
     """
     node: node to move
     bus: bus that will visit the node
@@ -240,8 +240,10 @@ class MoveNode:
     Bus0 : 0 -> 3 -> 7  -> 2 -> 0
     Bus1 : 0 -> 5 -> 0
 
-    """
+    Starting time will also be optimized by picking the maximum among the minumum
+    starting time for each customer.
 
+    """
     def __init__(self, solution: Solution, node: int, bus: int, pos: int):
         self.solution = solution
         self.node = node
@@ -291,22 +293,23 @@ class MoveNode:
 
             return new_trip_nodes_
 
-        def max_des_arr_time(nodes: List):
+        def best_starting_time(bus):
             """
-            Return max desired arrival time from list of nodes.
-            If list is empty or contains PUB only return None.
+            Optimize starting time of "bus" trip:
+            - loop through nodes and arrival times in bus trip
+            - compute minimum starting time for each node, in order to respect time window
+            - take the max between these times
             """
-            customers = {}
-            for node in nodes:
-                if node == PUB:
-                    continue
-                customers[node] = self.solution.model.customers[node-1][2]
-            try:
-                max_time = max(customers.values())
-            except ValueError:
-                max_time = None
-            # max_id = max(customers.items(), key=operator.itemgetter(1))[0]
-            return max_time
+            trip = self.solution.trips[bus]
+            old_starting_time = trip[0][1]
+            new_starting_time = 0
+            for (n, t) in trip[1:]:
+                a = self.solution.model.customer_arr_time(n)
+                trip_time = t - old_starting_time
+                new_starting_time = max(new_starting_time, a - trip_time)
+
+            new_starting_time += EPSILON
+            return new_starting_time
 
         # CASE 1: Source and destination bus are the same
         if src_bus == self.dst_bus:
@@ -315,9 +318,11 @@ class MoveNode:
             new_trip_nodes = compute_trip_visiting_node(
                 [node for (node, t) in trip], self.node, self.pos)
 
+            dst_starting_time = best_starting_time(self.dst_bus)
+
             # vprint(f"TripBefore (bus={self.bus})", self.solution.trips[self.bus])
             self.solution.trips[self.dst_bus] = compute_nodes_times(
-                self.solution.model, new_trip_nodes, starting_time=trip[0][1])
+                self.solution.model, new_trip_nodes, starting_time=dst_starting_time)
             # vprint(f"TripAfter (bus={self.bus})", self.solution.trips[self.bus])
 
         # CASE 2: Source and destination bus are different
@@ -334,7 +339,9 @@ class MoveNode:
 
             # re-compute starting time based on new nodes.
             # if src_nodes list is empty use previous starting time
-            src_starting_time = max_des_arr_time(src_nodes) or src_trip[0][1]
+            # src_starting_time = max_des_arr_time(src_nodes) or src_trip[0][1]
+
+            src_starting_time = best_starting_time(src_bus) or src_trip[0][1]
 
             self.solution.trips[src_bus] = compute_nodes_times(
                 self.solution.model, src_nodes, starting_time=src_starting_time)
@@ -343,7 +350,7 @@ class MoveNode:
 
             if dst_trip:
                 # Keep the previous starting time
-                dst_starting_time = dst_trip[0][1]
+                dst_starting_time = best_starting_time(self.dst_bus)
             else:
                 # There was no node visited by this bus yet,
                 # start at the optimal time to visit the first
@@ -355,36 +362,6 @@ class MoveNode:
             self.solution.trips[dst_bus] = compute_nodes_times(
                 self.solution.model, dst_nodes, starting_time=dst_starting_time)
             # vprint(f"DstTripAfter (bus={dst_bus})", self.solution.trips[dst_bus])
-
-
-class OptTime:
-    """
-    Optimize starting time of a bus trip in solution:
-    - loop through nodes and arrival times in bus trip
-    - compute minimum starting time for each node, in order to respect time window
-    - take the max between these times
-    """
-
-    def __init__(self, solution: Solution, bus: int):
-        self.solution = solution
-        self.bus = bus
-
-    def apply(self):
-        trip = self.solution.trips[self.bus]
-        old_starting_time = trip[0][1]
-        new_starting_time = 0
-        for (node, t) in trip[1:]:
-            a = self.solution.model.customer_arr_time(node)
-            trip_time = t - old_starting_time
-            new_starting_time = max(new_starting_time, a - trip_time)
-
-        new_starting_time += EPSILON
-        vprint("OptTime: TripBefore", self.solution.trips[self.bus])
-        self.solution.trips[self.bus] = compute_nodes_times(
-            self.solution.model,
-            [node for (node, t) in trip],
-            starting_time=new_starting_time)
-        vprint("OptTime: TripAfter", self.solution.trips[self.bus])
 
 
 class LocalSearch:
@@ -408,21 +385,27 @@ class LocalSearch:
                         for dst_pos in range(len(solution.trips[dst_bus]) + 1):
                             new_solution = solution.copy()
                             vprint(f"initial solution: {new_solution.trips}")
-                            mv = MoveNode(new_solution, src_node, dst_bus, dst_pos)
+                            # mv = MoveNode(new_solution, src_node, dst_bus, dst_pos)
+                            # mv.apply()
+                            # vprint(f"MoveNode(node={mv.node}, bus={mv.dst_bus}, pos={mv.pos})")
+                            #
+                            # # check validity and improvement
+                            # result = Validator(self.model, new_solution).validate()
+                            #
+                            # # if MoveNode creates a feasible solution, use OptTime
+                            # if result.feasible:
+                            #     mv_time_dst = OptTime(new_solution, dst_bus)
+                            #     mv_time_dst.apply()
+                            #
+                            #     if src_bus != dst_bus:
+                            #         mv_time_src = OptTime(new_solution, src_bus)
+                            #         mv_time_src.apply()
+
+                            mv = MoveAndOptTime(new_solution, src_node, dst_bus, dst_pos)
                             mv.apply()
-                            vprint(f"MoveNode(node={mv.node}, bus={mv.dst_bus}, pos={mv.pos})")
 
                             # check validity and improvement
                             result = Validator(self.model, new_solution).validate()
-
-                            # if MoveNode creates a feasible solution, use OptTime
-                            if result.feasible:
-                                mv_time_dst = OptTime(new_solution, dst_bus)
-                                mv_time_dst.apply()
-
-                                if src_bus != dst_bus:
-                                    mv_time_src = OptTime(new_solution, src_bus)
-                                    mv_time_src.apply()
 
                             vprint(f"MoveNode(node={mv.node}, bus={mv.dst_bus}, pos={mv.pos}) ->"
                                    f"[feasible={result.feasible}, violations={result.hard_violations}, cost={result.cost}]"
