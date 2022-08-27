@@ -245,20 +245,20 @@ class MoveNode:
     def __init__(self, solution: Solution, node: int, bus: int, pos: int):
         self.solution = solution
         self.node = node
-        self.bus = bus
+        self.dst_bus = bus
         self.pos = pos
 
     def apply(self):
         # find the node
-        node_bus = None
+        src_bus = None
         for bus, trip in enumerate(self.solution.trips):
             for (node, t) in trip:
                 if node == self.node:
-                    node_bus = bus
+                    src_bus = bus
                     break
-            if node_bus is not None:
+            if src_bus is not None:
                 break
-        if node_bus is None:
+        if src_bus is None:
             raise AssertionError("Don't know where the node is")
 
         def compute_trip_visiting_node(trip_nodes_, node_, pos_):
@@ -309,21 +309,20 @@ class MoveNode:
             return max_time
 
         # CASE 1: Source and destination bus are the same
-        if node_bus == self.bus:
-            trip = self.solution.trips[self.bus]
+        if src_bus == self.dst_bus:
+            trip = self.solution.trips[self.dst_bus]
 
             new_trip_nodes = compute_trip_visiting_node(
                 [node for (node, t) in trip], self.node, self.pos)
 
             # vprint(f"TripBefore (bus={self.bus})", self.solution.trips[self.bus])
-            self.solution.trips[self.bus] = compute_nodes_times(
+            self.solution.trips[self.dst_bus] = compute_nodes_times(
                 self.solution.model, new_trip_nodes, starting_time=trip[0][1])
             # vprint(f"TripAfter (bus={self.bus})", self.solution.trips[self.bus])
 
         # CASE 2: Source and destination bus are different
         else:
-            src_bus = node_bus
-            dst_bus = self.bus
+            dst_bus = self.dst_bus
 
             src_trip = self.solution.trips[src_bus]
             dst_trip = self.solution.trips[dst_bus]
@@ -358,7 +357,7 @@ class MoveNode:
             # vprint(f"DstTripAfter (bus={dst_bus})", self.solution.trips[dst_bus])
 
 
-class OptTimeMove:
+class OptTime:
     """
     Optimize starting time of a bus trip in solution:
     - loop through nodes and arrival times in bus trip
@@ -411,21 +410,21 @@ class LocalSearch:
                             vprint(f"initial solution: {new_solution.trips}")
                             mv = MoveNode(new_solution, src_node, dst_bus, dst_pos)
                             mv.apply()
-                            vprint(f"MoveNode(node={mv.node}, bus={mv.bus}, pos={mv.pos})")
+                            vprint(f"MoveNode(node={mv.node}, bus={mv.dst_bus}, pos={mv.pos})")
 
                             # check validity and improvement
                             result = Validator(self.model, new_solution).validate()
 
                             # if MoveNode creates a feasible solution, use OptTime
                             if result.feasible:
-                                mv_time_dst = OptTimeMove(new_solution, dst_bus)
+                                mv_time_dst = OptTime(new_solution, dst_bus)
                                 mv_time_dst.apply()
 
                                 if src_bus != dst_bus:
-                                    mv_time_src = OptTimeMove(new_solution, src_bus)
+                                    mv_time_src = OptTime(new_solution, src_bus)
                                     mv_time_src.apply()
 
-                            vprint(f"MoveNode(node={mv.node}, bus={mv.bus}, pos={mv.pos}) ->"
+                            vprint(f"MoveNode(node={mv.node}, bus={mv.dst_bus}, pos={mv.pos}) ->"
                                    f"[feasible={result.feasible}, violations={result.hard_violations}, cost={result.cost}]"
                                    f"\t// current best cost={best_result.cost}")
 
