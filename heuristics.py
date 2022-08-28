@@ -1,7 +1,7 @@
 import random
 import time
 from typing import List, Dict
-
+from math import exp
 from commons import PUB, vprint
 from model import Model
 from solution import Solution
@@ -447,6 +447,59 @@ class LocalSearch:
         return solution
 
 
+class SimulatedAnnealing:
+
+    def __init__(self, model: Model, solution: Solution):
+        self.model = model
+        self.solution = solution
+        self.cooling_factor = 0.98
+        self.T = 1.5
+        self.end_T = 0.1
+        self.max_it = 1000
+
+    def solve(self) -> Solution:
+        T = self.T
+        solution = self.solution
+        best_result = Validator(self.model, solution).validate()
+
+        def safe_exp(x):
+            try:
+                return exp(x)
+            except OverflowError:
+                return 0
+
+        vprint("=== Simulated Annealing ===")
+        while T > self.end_T:
+            vprint(f"T = {T}")
+            for i in range(self.max_it):
+                vprint(f"iteration # {i}")
+                new_solution = solution.copy()
+
+                # try a random move
+                dst_bus = random.choice(list(range(self.model.N)))
+                src_node = random.choice((list(range(1, len(self.model.customers)+1))))
+                dst_pos = random.choice(list(range(len(solution.trips[dst_bus]) + 1)))
+
+                vprint(f"MoveAndOptTime: dst_bus = {dst_bus}, src_node = {src_node}, dst_pos = {dst_pos}")
+                mv = MoveAndOptTime(new_solution, src_node, dst_bus, dst_pos)
+                mv.apply()
+
+                result = Validator(self.model, new_solution).validate()
+
+                if result.feasible:
+                    delta_cost = best_result.cost - result.cost
+                    if delta_cost < 0:
+                        solution = new_solution
+                        best_result = result
+                    elif random.random() <= safe_exp(delta_cost/T):
+                        solution = new_solution
+                        best_result = result
+
+            T = T * self.cooling_factor
+
+        return solution
+
+
 class HeuristicSolver:
     def __init__(self, model: Model, heuristic="none", max_t=60):
         self.model = model
@@ -454,7 +507,7 @@ class HeuristicSolver:
         self.max_t = float(max_t)
 
     def solve(self) -> Solution:
-        if self.heuristic not in ["none", "ls", "ls-ms"]:
+        if self.heuristic not in ["none", "ls", "ls-ms", "sa"]:
             raise NotImplementedError()
 
         # build initial solution
@@ -480,4 +533,7 @@ class HeuristicSolver:
                     best_cost_ls = v.total_cost()
                     best_sol_ls = sol_ls
             solution = best_sol_ls
+
+        if self.heuristic == "sa":
+            solution = SimulatedAnnealing(self.model, initial_solution).solve()
         return solution
