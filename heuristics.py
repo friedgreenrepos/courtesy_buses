@@ -452,15 +452,17 @@ class SimulatedAnnealing:
     def __init__(self, model: Model, solution: Solution):
         self.model = model
         self.solution = solution
-        self.cooling_factor = 0.98
-        self.T = 1.5
-        self.end_T = 0.1
-        self.max_it = 1000
+        self.cooling_factor = 0.99
+        self.T = 100
+        self.end_T = 10
+        self.max_it = 5000
 
     def solve(self) -> Solution:
         T = self.T
         solution = self.solution
-        best_result = Validator(self.model, solution).validate()
+        result = Validator(self.model, solution).validate()
+        best_result = result
+        best_solution = solution
 
         def safe_exp(x):
             try:
@@ -470,34 +472,44 @@ class SimulatedAnnealing:
 
         vprint("=== Simulated Annealing ===")
         while T > self.end_T:
-            vprint(f"T = {T}")
             for i in range(self.max_it):
-                vprint(f"iteration # {i}")
+                # vprint(f"iteration # {i}")
                 new_solution = solution.copy()
 
                 # try a random move
-                dst_bus = random.choice(list(range(self.model.N)))
-                src_node = random.choice((list(range(1, len(self.model.customers)+1))))
-                dst_pos = random.choice(list(range(len(solution.trips[dst_bus]) + 1)))
+                # dst_bus = random.choice(list(range(self.model.N)))
+                # src_node = random.choice((list(range(1, len(self.model.customers)+1))))
+                # dst_pos = random.choice(list(range(len(solution.trips[dst_bus]) + 1)))
+
+                dst_bus = random.randint(0, self.model.N)
+                print(dst_bus)
+                src_node = random.randint(1, len(self.model.customers) + 1)
+                dst_pos = random.randint(0, len(solution.trips[dst_bus]) + 1)
 
                 vprint(f"MoveAndOptTime: dst_bus = {dst_bus}, src_node = {src_node}, dst_pos = {dst_pos}")
                 mv = MoveAndOptTime(new_solution, src_node, dst_bus, dst_pos)
                 mv.apply()
 
-                result = Validator(self.model, new_solution).validate()
+                new_result = Validator(self.model, new_solution).validate()
 
-                if result.feasible:
-                    delta_cost = best_result.cost - result.cost
-                    if delta_cost < 0:
+                if new_result.feasible:
+                    delta_cost = result.cost - new_result.cost
+                    vprint(f"T = {T}, delta = {delta_cost}, exp = {safe_exp(delta_cost/T)}")
+                    if random.random() <= safe_exp(delta_cost/T):
+                        vprint(f"ACCEPTED! new cost = {new_result.cost}")
                         solution = new_solution
+                        result = new_result
+
+                    if result.cost + EPSILON < best_result.cost:
                         best_result = result
-                    elif random.random() <= safe_exp(delta_cost/T):
-                        solution = new_solution
-                        best_result = result
+                        best_solution = solution
+                        vprint(f"***NEW BEST = {best_result.cost}***")
+
+                    vprint("====================")
 
             T = T * self.cooling_factor
 
-        return solution
+        return best_solution
 
 
 class HeuristicSolver:
