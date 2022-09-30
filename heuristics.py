@@ -293,81 +293,55 @@ class MoveAndOptTime:
 
             return new_trip_nodes_
 
-        def best_starting_time(bus):
+        def best_starting_time(nodes):
             """
             Optimize starting time of "bus" trip:
             - loop through nodes and arrival times in bus trip
             - compute minimum starting time for each node, in order to respect time window
             - take the max between these times
             """
-            trip = self.solution.trips[bus]
-            old_starting_time = trip[0][1]
             new_starting_time = 0
-            for (n, t) in trip[1:]:
+            time_to_node = 0
+            last_node = PUB
+            for n in nodes[1:]:
+                time_to_node += self.solution.model.time(last_node, n)
                 a = self.solution.model.customer_arr_time(n)
-                trip_time = t - old_starting_time
-                new_starting_time = max(new_starting_time, a - trip_time)
-
-            new_starting_time += EPSILON
+                new_starting_time = max(new_starting_time, a - time_to_node)
+                last_node = n
             return new_starting_time
 
-        # CASE 1: Source and destination bus are the same
         if src_bus == self.dst_bus:
             trip = self.solution.trips[self.dst_bus]
 
             new_trip_nodes = compute_trip_visiting_node(
                 [node for (node, t) in trip], self.node, self.pos)
 
-            dst_starting_time = best_starting_time(self.dst_bus)
+            dst_starting_time = best_starting_time(new_trip_nodes)
 
-            # vprint(f"TripBefore (bus={self.bus})", self.solution.trips[self.bus])
             self.solution.trips[self.dst_bus] = compute_nodes_times(
                 self.solution.model, new_trip_nodes, starting_time=dst_starting_time)
-            # vprint(f"TripAfter (bus={self.bus})", self.solution.trips[self.bus])
-
-        # CASE 2: Source and destination bus are different
         else:
-            dst_bus = self.dst_bus
 
             src_trip = self.solution.trips[src_bus]
-            dst_trip = self.solution.trips[dst_bus]
+            dst_trip = self.solution.trips[self.dst_bus]
 
             src_nodes = [node for (node, t) in src_trip if node != self.node]
             dst_nodes = compute_trip_visiting_node([node for (node, t) in dst_trip], self.node, self.pos)
 
-            # vprint(f"SrcTripBefore (bus={src_bus})", self.solution.trips[src_bus])
-
-            # re-compute starting time based on new nodes.
-            # if src_nodes list is empty use previous starting time
-            # src_starting_time = max_des_arr_time(src_nodes) or src_trip[0][1]
-
-            src_starting_time = best_starting_time(src_bus) or src_trip[0][1]
+            src_starting_time = best_starting_time(src_nodes)
+            dst_starting_time = best_starting_time(dst_nodes)
 
             self.solution.trips[src_bus] = compute_nodes_times(
                 self.solution.model, src_nodes, starting_time=src_starting_time)
-
-            # vprint(f"SrcTripAfter (bus={src_bus})", self.solution.trips[src_bus])
-
-            if dst_trip:
-                # Keep the previous starting time
-                dst_starting_time = best_starting_time(self.dst_bus)
-            else:
-                # There was no node visited by this bus yet,
-                # start at the optimal time to visit the first
-                # and unique customer visited by the bus
-                dst_starting_time = \
-                    self.solution.model.customer_arr_time(self.node) - self.solution.model.time(PUB, self.node)
-
-            # vprint(f"DstTripBefore (bus={dst_bus})", self.solution.trips[dst_bus])
-            self.solution.trips[dst_bus] = compute_nodes_times(
+            self.solution.trips[self.dst_bus] = compute_nodes_times(
                 self.solution.model, dst_nodes, starting_time=dst_starting_time)
-            # vprint(f"DstTripAfter (bus={dst_bus})", self.solution.trips[dst_bus])
 
 
 class LocalSearch:
-    def __init__(self, model: Model, solution: Solution):
+    def __init__(self, model: Model, solution: Solution, options: Dict):
         self.model = model
         self.solution = solution
+        self.options = options
 
     def solve(self) -> Solution:
         solution = self.solution
@@ -449,16 +423,23 @@ class LocalSearch:
 
 class SimulatedAnnealing:
 
-    def __init__(self, model: Model, solution: Solution):
+    DEFAULT_COOLING_RATE = 0.98
+    DEFAULT_INITIAL_TEMPERATURE = 10
+    DEFAULT_MINIMUM_TEMPERATURE = 1
+    DEFAULT_ITERATIONS_PER_TEMPERATURE = 10000
+
+    def __init__(self, model: Model, solution: Solution, options: Dict):
         self.model = model
         self.solution = solution
-        self.cooling_factor = 0.99
-        self.T = 100
-        self.end_T = 10
-        self.max_it = 5000
+
+        self.cooling_factor = float(options.get("sa.cr", SimulatedAnnealing.DEFAULT_COOLING_RATE))
+        self.initial_temperature = float(options.get("sa.t", SimulatedAnnealing.DEFAULT_INITIAL_TEMPERATURE))
+        self.min_temperature = float(options.get("sa.min_t", SimulatedAnnealing.DEFAULT_MINIMUM_TEMPERATURE))
+        self.iterations = int(options.get("sa.it", SimulatedAnnealing.DEFAULT_ITERATIONS_PER_TEMPERATURE))
+        self.end_time = time.time() + options["solver.max_time"] if "solver.max_time" in options else None
 
     def solve(self) -> Solution:
-        T = self.T
+        t = self.initial_temperature
         solution = self.solution
         result = Validator(self.model, solution).validate()
         best_result = result
@@ -471,31 +452,38 @@ class SimulatedAnnealing:
                 return 0
 
         vprint("=== Simulated Annealing ===")
-        while T > self.end_T:
-            for i in range(self.max_it):
-                # vprint(f"iteration # {i}")
+        while t > self.min_temperature and (not self.end_time or time.time() < self.end_time):
+            print(f"T={t}, cost={result.cost}")
+            for i in range(self.iterations):
                 new_solution = solution.copy()
 
-                # try a random move
-                # dst_bus = random.choice(list(range(self.model.N)))
-                # src_node = random.choice((list(range(1, len(self.model.customers)+1))))
-                # dst_pos = random.choice(list(range(len(solution.trips[dst_bus]) + 1)))
+                dst_bus = random.randint(0, self.model.N - 1)
 
-                dst_bus = random.randint(0, self.model.N)
-                print(dst_bus)
-                src_node = random.randint(1, len(self.model.customers) + 1)
-                dst_pos = random.randint(0, len(solution.trips[dst_bus]) + 1)
+                # TODO: fix "boom" case (when trip is empty)
+                if not solution.trips[dst_bus]:
+                    continue
+                    # import json
+                    # print("BOOOOM")
+                    # print(json.dumps(solution.trips, indent=4))
+                    # exit(1)
 
-                vprint(f"MoveAndOptTime: dst_bus = {dst_bus}, src_node = {src_node}, dst_pos = {dst_pos}")
+                src_node = random.randint(1, len(self.model.customers))
+                dst_pos = random.randint(0, len(solution.trips[dst_bus]) - 1)
+
                 mv = MoveAndOptTime(new_solution, src_node, dst_bus, dst_pos)
                 mv.apply()
 
                 new_result = Validator(self.model, new_solution).validate()
 
+                vprint(f"MoveAndOptTime: dst_bus = {dst_bus}, src_node = {src_node}, dst_pos = {dst_pos}")
+
                 if new_result.feasible:
                     delta_cost = result.cost - new_result.cost
-                    vprint(f"T = {T}, delta = {delta_cost}, exp = {safe_exp(delta_cost/T)}")
-                    if random.random() <= safe_exp(delta_cost/T):
+                    vprint(f"T = {t}, delta = {delta_cost} ({result.cost} -> {new_result.cost}, "
+                           f"equals == {new_solution == solution}), exp = {safe_exp(delta_cost/t)}")
+                    vprint(f"---- SOLUTION BEFORE ----\n{solution.pretty_string()}")
+                    vprint(f"---- SOLUTION AFTER ----\n{new_solution.pretty_string()}")
+                    if random.random() <= safe_exp(delta_cost/t):
                         vprint(f"ACCEPTED! new cost = {new_result.cost}")
                         solution = new_solution
                         result = new_result
@@ -503,49 +491,61 @@ class SimulatedAnnealing:
                     if result.cost + EPSILON < best_result.cost:
                         best_result = result
                         best_solution = solution
-                        vprint(f"***NEW BEST = {best_result.cost}***")
+                        print(f"***NEW BEST = {best_result.cost}***")
 
                     vprint("====================")
+                else:
+                    vprint(f"UNFEASIBLE: {new_result.hard_violations}")
+                    vprint(f"---- SOLUTION BEFORE ----\n{solution.pretty_string()}")
+                    vprint(f"---- SOLUTION AFTER ----\n{new_solution.pretty_string()}")
 
-            T = T * self.cooling_factor
+            t = t * self.cooling_factor
 
         return best_solution
 
 
 class HeuristicSolver:
-    def __init__(self, model: Model, heuristic="none", max_t=60):
+    def __init__(self, model: Model, heuristic, options):
         self.model = model
         self.heuristic = heuristic
-        self.max_t = float(max_t)
+        self.options = options
 
     def solve(self) -> Solution:
-        if self.heuristic not in ["none", "ls", "ls-ms", "sa"]:
+        if self.heuristic not in ["none", "ls", "sa"]:
             raise NotImplementedError()
 
-        # build initial solution
-        initial_solution = GreedySolver(self.model).solve()
+        multistart = self.options.get("solver.multistart", False)
 
-        # greedy solution
-        solution = initial_solution
+        end_time = None
 
-        # local search
-        if self.heuristic == "ls":
-            solution = LocalSearch(self.model, initial_solution).solve()
+        if "solver.max_time" in self.options:
+            end_time = time.time() + self.options["solver.max_time"]
 
-        # local search multi-start
-        if self.heuristic == "ls-ms":
-            end_time = time.time() + self.max_t
-            best_sol_ls = None
-            best_cost_ls = None
-            while time.time() < end_time:
-                initial_solution = GreedySolver(self.model).solve()
-                sol_ls = LocalSearch(self.model, initial_solution).solve()
-                v = Validator(self.model, sol_ls)
-                if not best_sol_ls or v.total_cost() < best_cost_ls:
-                    best_cost_ls = v.total_cost()
-                    best_sol_ls = sol_ls
-            solution = best_sol_ls
+        best_solution = None
+        best_cost = None
 
-        if self.heuristic == "sa":
-            solution = SimulatedAnnealing(self.model, initial_solution).solve()
-        return solution
+        while True:
+            if end_time and time.time() > end_time:
+                break
+
+            solution = GreedySolver(self.model).solve()
+            if self.heuristic == "none":
+                pass
+            elif self.heuristic == "ls":
+                solution = LocalSearch(self.model, solution, options=self.options).solve()
+            elif self.heuristic == "sa":
+                solution = SimulatedAnnealing(self.model, solution, options=self.options).solve()
+
+            result = Validator(self.model, solution).validate()
+            if not result.feasible:
+                raise AssertionError("Solution is not feasible")
+
+            if not best_solution or result.cost < best_cost:
+                best_cost = result.cost
+                best_solution = solution
+                print(f"***NEW BEST = {best_cost}***")
+
+            if not multistart:
+                break
+
+        return best_solution
