@@ -75,6 +75,16 @@ def draw(model: Model, solution: Solution):
     plt.show()
 
 
+def parse_options(opts):
+    if not opts:
+        return {}
+    options = {}
+    for o in opts:
+        k, v = o[0].split("=")
+        options[k] = v
+    return options
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Courtesy Buses"
@@ -98,7 +108,17 @@ def main():
                         help="solve using heuristic")
 
     parser.add_argument("-t", "--max_time",
+                        type=int,
                         dest="max_time", metavar="MAXTIME",
+                        help="max time")
+
+    parser.add_argument("-m", "--multistart",
+                        action="store_const", const=True, default=False,
+                        dest="multistart", help="multistart")
+
+    parser.add_argument("-o", "--option",
+                        nargs="+", action="append",
+                        dest="option", metavar="KEY=VALUE",
                         help="ls multi-start max time")
 
     # positional arguments
@@ -114,6 +134,13 @@ def main():
     solution_path = parsed.get("solution")
     heuristic = parsed.get("heuristic")
     max_t = parsed.get("max_time")
+    multistart = parsed.get("multistart")
+    options = parse_options(parsed.get("option"))
+
+    if max_t:
+        options[f"solver.max_time"] = max_t
+    if multistart:
+        options[f"solver.multistart"] = True
 
     model = Model()
     if model.parse(model_path):
@@ -124,12 +151,8 @@ def main():
         # model.dump_information()
 
         if heuristic:
-            if max_t:
-                heuristic_solver = HeuristicSolver(model, heuristic, max_t)
-                solution = heuristic_solver.solve()
-            else:
-                heuristic_solver = HeuristicSolver(model, heuristic)
-                solution = heuristic_solver.solve()
+            heuristic_solver = HeuristicSolver(model, heuristic, options)
+            solution = heuristic_solver.solve()
         else:
             gurobi_solver = GurobiSolver(model)
             solution = gurobi_solver.solve()
