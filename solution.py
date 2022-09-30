@@ -19,6 +19,24 @@ class Solution:
                 s += f"{bus} {node} {t:.1f}\n"
         return s
 
+    def __eq__(self, other: 'Solution'):
+        if len(self.trips) != len(other.trips):
+            return False
+
+        for i in range(len(self.trips)):
+            trip = self.trips[i]
+            other_trip = other.trips[i]
+
+            if len(trip) != len(other_trip):
+                return False
+
+            for j in range(len(trip)):
+                node = trip[j]
+                other_node = other_trip[j]
+                if node != other_node:
+                    return False
+        return True
+
     def pretty_string(self):
         s = ""
         for bus, bus_trip in enumerate(self.trips):
