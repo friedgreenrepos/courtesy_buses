@@ -44,7 +44,8 @@ class Validator:
                 for (node, t) in bus_trip:
                     if node == PUB:
                         continue
-                    assert t + EPSILON >= self.model.customer_arr_time(node)
+                    if not (t + EPSILON >= self.model.customer_arr_time(node)):
+                        raise AssertionError(f"H5 ({node} arrives at {t} instead of {self.model.customer_arr_time(node)})")
 
     def check_H6(self):
         """H6. Y constraint: arrival times are consecutive"""
@@ -119,9 +120,9 @@ class Validator:
 
         try:
             self.check_H5()
-        except AssertionError:
+        except AssertionError as e:
             result.feasible = False
-            result.hard_violations.append("H5")
+            result.hard_violations.append(str(e))
 
         try:
             self.check_H6()
@@ -132,4 +133,5 @@ class Validator:
         # lazy, don't compute if not feasible
         if result.feasible:
             result.cost = self.total_cost()
+
         return result
