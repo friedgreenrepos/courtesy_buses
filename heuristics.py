@@ -436,7 +436,7 @@ class SimulatedAnnealing:
         self.initial_temperature = float(options.get("sa.t", SimulatedAnnealing.DEFAULT_INITIAL_TEMPERATURE))
         self.min_temperature = float(options.get("sa.min_t", SimulatedAnnealing.DEFAULT_MINIMUM_TEMPERATURE))
         self.iterations = int(options.get("sa.it", SimulatedAnnealing.DEFAULT_ITERATIONS_PER_TEMPERATURE))
-        self.end_time = time.time() + options["solver.max_time"] if "solver.max_time" in options else None
+        self.end_time = time.time() + float(options["solver.max_time"]) if "solver.max_time" in options else None
 
     def solve(self) -> Solution:
         t = self.initial_temperature
@@ -457,18 +457,18 @@ class SimulatedAnnealing:
             for i in range(self.iterations):
                 new_solution = solution.copy()
 
+                # choose random destination bus
                 dst_bus = random.randint(0, self.model.N - 1)
 
-                # TODO: fix "boom" case (when trip is empty)
-                if not solution.trips[dst_bus]:
-                    continue
-                    # import json
-                    # print("BOOOOM")
-                    # print(json.dumps(solution.trips, indent=4))
-                    # exit(1)
-
+                # choose random node to move
                 src_node = random.randint(1, len(self.model.customers))
-                dst_pos = random.randint(0, len(solution.trips[dst_bus]) - 1)
+
+                # choose random position to move the node to
+                # if trip is empty position has to be 0
+                if solution.trips[dst_bus]:
+                    dst_pos = random.randint(0, len(solution.trips[dst_bus]) - 1)
+                else:
+                    dst_pos = 0
 
                 mv = MoveAndOptTime(new_solution, src_node, dst_bus, dst_pos)
                 mv.apply()
@@ -481,8 +481,6 @@ class SimulatedAnnealing:
                     delta_cost = result.cost - new_result.cost
                     vprint(f"T = {t}, delta = {delta_cost} ({result.cost} -> {new_result.cost}, "
                            f"equals == {new_solution == solution}), exp = {safe_exp(delta_cost/t)}")
-                    vprint(f"---- SOLUTION BEFORE ----\n{solution.pretty_string()}")
-                    vprint(f"---- SOLUTION AFTER ----\n{new_solution.pretty_string()}")
                     if random.random() <= safe_exp(delta_cost/t):
                         vprint(f"ACCEPTED! new cost = {new_result.cost}")
                         solution = new_solution
@@ -496,8 +494,6 @@ class SimulatedAnnealing:
                     vprint("====================")
                 else:
                     vprint(f"UNFEASIBLE: {new_result.hard_violations}")
-                    vprint(f"---- SOLUTION BEFORE ----\n{solution.pretty_string()}")
-                    vprint(f"---- SOLUTION AFTER ----\n{new_solution.pretty_string()}")
 
             t = t * self.cooling_factor
 
@@ -519,7 +515,7 @@ class HeuristicSolver:
         end_time = None
 
         if "solver.max_time" in self.options:
-            end_time = time.time() + self.options["solver.max_time"]
+            end_time = time.time() + float(self.options["solver.max_time"])
 
         best_solution = None
         best_cost = None
