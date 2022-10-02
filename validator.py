@@ -90,8 +90,9 @@ class Validator:
                 except IndexError:
                     break
                 cost += self.model.time(node, next_node)
-            # add cost to go back to the PUB
-            cost += self.model.time(bus_trip[-1][0], PUB)
+            # if trip is no empty add cost og last node back to the PUB
+            if len(bus_trip) > 1:
+                cost += self.model.time(bus_trip[-1][0], PUB)
         return cost
 
     def total_cost(self):
