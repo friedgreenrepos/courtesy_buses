@@ -1,8 +1,8 @@
 # bus number
-N=3
+N=4
 
 # bus capacity
-Q=6
+Q=4
 
 CUSTOMERS
 # x y a
