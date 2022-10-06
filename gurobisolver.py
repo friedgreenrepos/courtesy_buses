@@ -95,10 +95,10 @@ class GurobiSolver:
                       for h in C for k in K), name="H3")
 
         # H4: bus trip constraints: use every bus only once
-        m.addConstrs(((quicksum(X[(0, j, k)] for (i, j, kk) in A if i == 0 and k == kk) == 1)
+        m.addConstrs(((quicksum(X[(0, j, k)] for (i, j, kk) in A if i == 0 and k == kk) <= 1)
                       for k in K),
                      name="H4a")
-        m.addConstrs(((quicksum(X[(i, 0, k)] for (i, j, kk) in A if j == 0 and k == kk) == 1)
+        m.addConstrs(((quicksum(X[(i, 0, k)] for (i, j, kk) in A if j == 0 and k == kk) <= 1)
                       for k in K),
                      name="H4b")
 
