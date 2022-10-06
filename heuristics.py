@@ -432,7 +432,7 @@ class SimulatedAnnealing:
         self.model = model
         self.solution = solution
 
-        self.cooling_factor = float(options.get("sa.cr", SimulatedAnnealing.DEFAULT_COOLING_RATE))
+        self.cooling_rate = float(options.get("sa.cr", SimulatedAnnealing.DEFAULT_COOLING_RATE))
         self.initial_temperature = float(options.get("sa.t", SimulatedAnnealing.DEFAULT_INITIAL_TEMPERATURE))
         self.min_temperature = float(options.get("sa.min_t", SimulatedAnnealing.DEFAULT_MINIMUM_TEMPERATURE))
         self.iterations = int(options.get("sa.it", SimulatedAnnealing.DEFAULT_ITERATIONS_PER_TEMPERATURE))
@@ -495,7 +495,7 @@ class SimulatedAnnealing:
                 else:
                     vprint(f"UNFEASIBLE: {new_result.hard_violations}")
 
-            t = t * self.cooling_factor
+            t = t * self.cooling_rate
 
         return best_solution
 
