@@ -13,7 +13,7 @@ class Solution:
         s = ""
         for bus, bus_trip in enumerate(self.trips):
             # go on if bus_trip is empty
-            if not bus_trip:
+            if len(bus_trip) < 2:
                 continue
             for (node, t) in bus_trip:
                 s += f"{bus} {node} {t:.1f}\n"
@@ -40,6 +40,8 @@ class Solution:
     def pretty_string(self):
         s = ""
         for bus, bus_trip in enumerate(self.trips):
+            if len(bus_trip) < 2:
+                continue
             s += f"-- bus {bus}--\n"
             for (node, t) in bus_trip:
                 s += f"{node} (t={t:.1f}) -> "
@@ -72,7 +74,7 @@ class Solution:
     def description(self):
         s = ''
         for bus, bus_trip in enumerate(self.trips):
-            if not bus_trip:
+            if len(bus_trip) < 2:
                 continue
             s += f"Bus {bus}\n"
             for i, (node, t) in enumerate(bus_trip):
