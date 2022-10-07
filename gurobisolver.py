@@ -1,14 +1,17 @@
+from typing import Dict
+
 from model import Model
 
-import gurobipy
-from gurobipy import quicksum
 from commons import PUB, vprint, verbose, node_to_string, EPSILON
 from solution import Solution
+from gurobipy import quicksum
+import gurobipy
 
 
 class GurobiSolver:
-    def __init__(self, model: Model):
+    def __init__(self, model: Model, options: Dict):
         self.model = model
+        self.max_time = float(options["solver.max_time"]) if "solver.max_time" in options else None
 
     def solve(self):
         m = gurobipy.Model("courtesy-buses")
@@ -142,6 +145,9 @@ class GurobiSolver:
             self.model.beta * quicksum(Z[i] - a[i] for i in C),
 
             gurobipy.GRB.MINIMIZE)
+
+        if self.max_time:
+            m.setParam('Timelimit', self.max_time)
 
         # save LP
         m.write("courtesy-buses.lp")

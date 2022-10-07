@@ -159,7 +159,7 @@ def main():
             heuristic_solver = HeuristicSolver(model, heuristic, options)
             solution = heuristic_solver.solve()
         else:
-            gurobi_solver = GurobiSolver(model)
+            gurobi_solver = GurobiSolver(model, options)
             solution = gurobi_solver.solve()
 
         if solution:
