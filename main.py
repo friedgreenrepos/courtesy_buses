@@ -24,9 +24,9 @@ def draw(model: Model, solution: Solution):
     for i, (x, y) in enumerate(zip(xc, yc)):
         coord[i + 1] = (x, y)
 
-    bus_in_use = [i for i in range(len(solution.trips)) if solution.trips]
+    all_buses = [i for i in range(len(solution.trips)) if solution.trips]
     colours = [(np.random.rand(), np.random.rand(), np.random.rand())
-               for _ in range(len(bus_in_use))]
+               for _ in range(len(all_buses))]
 
     fig, ax = plt.subplots(1, 1)
     ax.clear()
@@ -40,7 +40,11 @@ def draw(model: Model, solution: Solution):
         plt.annotate(f"a_{i + 1}={ac[i]}", (xc[i], yc[i] + 0.2))
 
     offset = 0.2
+    patches = []
+
     for bus, bus_trip in enumerate(solution.trips):
+        if len(bus_trip) < 2:
+            continue
         for i, (node, t) in enumerate(bus_trip):
             x_i = coord[node][0]
             y_i = coord[node][1]
@@ -62,16 +66,17 @@ def draw(model: Model, solution: Solution):
                       length_includes_head=True)
 
             if node == PUB:
-                plt.annotate(f"bus{bus}| t_{node}={t:.1f}",
-                             (x_i, y_i + offset))
-                offset += 0.3
+                if t != 0:
+                    plt.annotate(f"bus{bus}| t_{node}={t:.1f}",
+                                 (x_i, y_i + offset))
+                    offset += 0.4
             else:
                 plt.annotate(f"t_{node}={t:.1f}",
-                             (x_i, y_i - 0.2))
+                             (x_i, y_i - 0.3))
 
-    patch = [mpatches.Patch(color=colours[n], label="bus" + str(bus_in_use[n]))
-             for n in range(len(bus_in_use))]
-    ax.legend(handles=patch, loc="best")
+        patches.append(mpatches.Patch(color=colours[bus], label="bus" + str(all_buses[bus])))
+
+    ax.legend(handles=patches, loc="best")
     plt.show()
 
 
