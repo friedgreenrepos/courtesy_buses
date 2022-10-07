@@ -359,21 +359,6 @@ class LocalSearch:
                         for dst_pos in range(len(solution.trips[dst_bus]) + 1):
                             new_solution = solution.copy()
                             vprint(f"initial solution: {new_solution.trips}")
-                            # mv = MoveNode(new_solution, src_node, dst_bus, dst_pos)
-                            # mv.apply()
-                            # vprint(f"MoveNode(node={mv.node}, bus={mv.dst_bus}, pos={mv.pos})")
-                            #
-                            # # check validity and improvement
-                            # result = Validator(self.model, new_solution).validate()
-                            #
-                            # # if MoveNode creates a feasible solution, use OptTime
-                            # if result.feasible:
-                            #     mv_time_dst = OptTime(new_solution, dst_bus)
-                            #     mv_time_dst.apply()
-                            #
-                            #     if src_bus != dst_bus:
-                            #         mv_time_src = OptTime(new_solution, src_bus)
-                            #         mv_time_src.apply()
 
                             mv = MoveAndOptTime(new_solution, src_node, dst_bus, dst_pos)
                             mv.apply()
@@ -387,8 +372,6 @@ class LocalSearch:
 
                             if result.feasible and result.cost < best_result.cost:
                                 vprint(f"*** New best solution {result.cost} ***")
-                                # vprint(f"TripsBefore=\n{solution.pretty_string()}")
-                                # vprint(f"TripsAfter=\n{new_solution.pretty_string()}")
                                 solution = new_solution
                                 best_result = result
                                 improved = True
@@ -401,21 +384,6 @@ class LocalSearch:
                         break
                 if improved:
                     break
-            # for bus, trip in enumerate(self.solution.trips):
-            #     if not trip:
-            #         continue
-            #     mv = OptTimeMove(solution, bus)
-            #     mv.apply()
-            #
-            #     result = Validator(self.model, solution).validate()
-            #     vprint(f"OptTimeMove(bus={mv.bus}) -> "
-            #            f"[feasible={result.feasible}, violations={result.hard_violations}, cost={result.cost}]"
-            #            f"\t// best_cost={best_result.cost}")
-            #
-            #     if result.feasible and result.cost < best_result.cost:
-            #         vprint(f"*** New best solution {result.cost} ***")
-            #         best_result = result
-            #         improved = True
         vprint("==== LS END ====")
 
         return solution
