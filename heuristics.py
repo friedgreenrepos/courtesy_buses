@@ -10,6 +10,7 @@ from validator import Validator
 EPSILON = 10e-3
 
 
+# TODO: remove this class and its dependencies
 class Heuristic:
     def __init__(self, model: Model):
         self.model = model
@@ -248,7 +249,8 @@ class LocalSearch:
     def __init__(self, model: Model, solution: Solution, options: Dict):
         self.model = model
         self.solution = solution
-        self.options = options
+        # self.options = options
+        self.end_time = time.time() + float(options["solver.max_time"]) if "solver.max_time" in options else None
 
     def solve(self) -> Solution:
         solution = self.solution
@@ -258,7 +260,7 @@ class LocalSearch:
         improved = True
 
         vprint("==== LS START ====")
-        while improved:
+        while improved and (not self.end_time or time.time() < self.end_time):
             improved = False
             for dst_bus in range(len(solution.trips)):
                 for src_bus, src_bus_trip in enumerate(solution.trips):
