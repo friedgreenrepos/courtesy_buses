@@ -10,16 +10,6 @@ from validator import Validator
 EPSILON = 10e-3
 
 
-# TODO: remove this class and its dependencies
-class Heuristic:
-    def __init__(self, model: Model):
-        self.model = model
-
-    def solve(self):
-        """Implement in subclass"""
-        pass
-
-
 def min_des_arr_time(customers: Dict):
     """
     From customers dictionary passed as input:
@@ -50,12 +40,15 @@ def max_des_arr_time(customers: Dict):
     return max_id, max_customer
 
 
-class GreedySolver(Heuristic):
+class GreedySolver:
     """
     Constructive solver:
     - randomly assign customer to bus
     - use maximum starting time of all customers as every trip starting time
     """
+
+    def __init__(self, model: Model):
+        self.model = model
 
     def solve(self) -> Solution:
         """ Assign random bus to each customer """
