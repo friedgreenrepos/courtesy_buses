@@ -257,7 +257,6 @@ class LocalSearch:
         self.model = model
         self.solution = solution
         # self.options = options
-        self.end_time = time.time() + float(options["solver.max_time"]) if "solver.max_time" in options else None
 
     def solve(self) -> Solution:
         solution = self.solution
@@ -267,7 +266,7 @@ class LocalSearch:
         improved = True
 
         vprint("==== LS START ====")
-        while improved and (not self.end_time or time.time() < self.end_time):
+        while improved:
             improved = False
             for dst_bus in range(len(solution.trips)):
                 for src_bus, src_bus_trip in enumerate(solution.trips):
@@ -431,6 +430,7 @@ class HeuristicSolver:
 
             result = Validator(self.model, solution).validate()
             if not result.feasible:
+                print(result.hard_violations)
                 raise AssertionError("Solution is not feasible")
 
             if not best_solution or result.cost < best_cost:
