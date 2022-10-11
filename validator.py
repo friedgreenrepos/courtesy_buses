@@ -17,24 +17,28 @@ class Validator:
 
     def check_H1(self):
         """H1. Bus capacity"""
-        for bus_trip in self.solution.trips:
+        for i, bus_trip in enumerate(self.solution.trips):
             nodes_in_trip = [node for (node, _) in bus_trip
                              if node != PUB]
-            assert len(nodes_in_trip) <= self.model.Q
+            if len(nodes_in_trip) > self.model.Q:
+                raise AssertionError(f"H1: trip {i} ({len(nodes_in_trip)} nodes) exceeds bus capacity ({self.model.Q})")
 
     def check_H2(self):
         """H2. Take all customers home and only once"""
-        assert self.model.customers_set() == set(self.solution.nodes())
+        if not self.model.customers_set() == set(self.solution.nodes()):
+            raise AssertionError("H2: there are more nodes than customers")
 
     def check_H4(self):
         """H4. Each bus is used only once, and it starts and ends in PUB"""
         # n.of buses
         buses_in_use = [bus for bus, bus_trip in enumerate(self.solution.trips) if bus_trip]
-        assert len(buses_in_use) <= len(self.model.buses())
+        if not len(buses_in_use) <= len(self.model.buses()):
+            raise AssertionError("H4a: some buses are used more than once")
         # start in PUB
-        for bus_trip in self.solution.trips:
-            if bus_trip:
-                assert bus_trip[0][0] == PUB
+        for i, bus_trip in enumerate(self.solution.trips):
+            if len(bus_trip) > 2:
+                if bus_trip[0][0] != PUB:
+                    raise AssertionError(f"H4b: trip {i} does not start from PUB")
         # end in pub is implicit
 
     def check_H5(self):
@@ -49,12 +53,15 @@ class Validator:
 
     def check_H6(self):
         """H6. Y constraint: arrival times are consecutive"""
-        for bus_trip in self.solution.trips:
+        for j, bus_trip in enumerate(self.solution.trips):
             for i, (node, t) in enumerate(bus_trip):
                 try:
-                    assert t < bus_trip[i+1][1]
+                    next_t = bus_trip[i+1][1]
                 except IndexError:
                     break
+                if t > next_t:
+                    raise AssertionError(f"H6: arrival times are not consecutive in bus trip {j}: "
+                                         f"(t of node {node} > t of node {bus_trip[i + 1][0]}")
 
     def check_hard(self):
         """Check all constraints"""
@@ -105,21 +112,21 @@ class Validator:
 
         try:
             self.check_H1()
-        except AssertionError:
+        except AssertionError as e:
             result.feasible = False
-            result.hard_violations.append("H1")
+            result.hard_violations.append(str(e))
 
         try:
             self.check_H2()
-        except AssertionError:
+        except AssertionError as e:
             result.feasible = False
-            result.hard_violations.append("H2")
+            result.hard_violations.append(str(e))
 
         try:
             self.check_H4()
-        except AssertionError:
+        except AssertionError as e:
             result.feasible = False
-            result.hard_violations.append("H4")
+            result.hard_violations.append(str(e))
 
         try:
             self.check_H5()
@@ -129,9 +136,9 @@ class Validator:
 
         try:
             self.check_H6()
-        except AssertionError:
+        except AssertionError as e:
             result.feasible = False
-            result.hard_violations.append("H6")
+            result.hard_violations.append(str(e))
 
         # lazy, don't compute if not feasible
         if result.feasible:
