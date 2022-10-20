@@ -5,3 +5,5 @@ solutions/
 .idea
 /tmp
 .python-version
+ltximg/
+*.tex
