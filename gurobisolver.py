@@ -203,7 +203,11 @@ class GurobiSolver:
         # build solution object
         passages = []
         for (i, j, k) in A:
-            if X[(i, j, k)].x > EPSILON:
+            try:
+                x = X[(i, j, k)].x
+            except AttributeError:
+                return None
+            if x > EPSILON:
                 # bus k transit from i to j, check when
                 t = Y[(i, k)].x
                 passages.append((i, j, k, t))
