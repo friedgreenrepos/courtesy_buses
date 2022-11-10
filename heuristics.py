@@ -257,6 +257,7 @@ class LocalSearch:
         self.model = model
         self.solution = solution
         # self.options = options
+        self.end_time = float(options["solver.end_time"])
 
     def solve(self) -> Solution:
         solution = self.solution
@@ -266,7 +267,7 @@ class LocalSearch:
         improved = True
 
         vprint("==== LS START ====")
-        while improved:
+        while improved and (not self.end_time or time.time() < self.end_time):
             improved = False
             for dst_bus in range(len(solution.trips)):
                 for src_bus, src_bus_trip in enumerate(solution.trips):
@@ -329,7 +330,8 @@ class SimulatedAnnealing:
         self.initial_temperature = float(options.get("sa.t", SimulatedAnnealing.DEFAULT_INITIAL_TEMPERATURE))
         self.min_temperature = float(options.get("sa.min_t", SimulatedAnnealing.DEFAULT_MINIMUM_TEMPERATURE))
         self.iterations = int(options.get("sa.it", SimulatedAnnealing.DEFAULT_ITERATIONS_PER_TEMPERATURE))
-        self.end_time = time.time() + float(options["solver.max_time"]) if "solver.max_time" in options else None
+        # self.end_time = time.time() + float(options["solver.max_time"]) if "solver.max_time" in options else None
+        self.end_time = float(options["solver.end_time"])
 
     def solve(self) -> Solution:
         t = self.initial_temperature
@@ -412,6 +414,7 @@ class HeuristicSolver:
 
         if "solver.max_time" in self.options:
             end_time = time.time() + float(self.options["solver.max_time"])
+            self.options["solver.end_time"] = end_time
 
         best_solution = None
         best_cost = None
