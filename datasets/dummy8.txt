@@ -1,5 +1,5 @@
 # bus number
-N=10
+N=8
 
 # bus capacity
 Q=9

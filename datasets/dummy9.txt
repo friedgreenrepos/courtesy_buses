@@ -1,5 +1,5 @@
 # bus number
-N=20
+N=11
 
 # bus capacity
 Q=6
@@ -57,6 +57,7 @@ CUSTOMERS
 32 69 125
 86 10 27
 87 33 11
+33 12 180
 
 
 
