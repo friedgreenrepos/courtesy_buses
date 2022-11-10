@@ -21,7 +21,7 @@ Sia:
 - $C$ l'insieme dei clienti del pub
 - $a_i$ l'orario di arrivo a casa desiderato, richiesto da ogni cliente $i\in C$
 - $[a_i, +\infty]$ la time windows in cui portare a casa il cliente associato al nodo $i$
-- $G=(V,A)$ un grafo orientato con $V=\{0\} \cup C $, dove il nodo $\{0\}$ rappresenta il pub e con A insieme degli archi $(i,j)$
+- $G=(V,A)$ un grafo orientato con $V=\{0\} \cup C$, dove il nodo $\{0\}$ rappresenta il pub e con A insieme degli archi $(i,j)$
 - $t_{i,j}$ il tempo di attraversamento dell'arco $(i,j) \in A$
 - $c_{i,j}$ il costo di attraversamento dell'arco $(i,j) \in A$
 
@@ -98,7 +98,7 @@ Con $\alpha$ e $\beta$ parametri per stabilire a quale delle componenti della f.
    y_{j,k} \le y_{i,k} + t_{i,j} x_{i,j,k} + M(1-x_{i,j,k})
    \end{equation}
 7. Valorizzazione $z_i$
-   \begin{equation}
+\begin{equation}
 z_i = \sum_{k \in K} y'_{i,k} \mbox{; } i \in I
 \end{equation}
 8. [@8] Valorizzazione $w_{i,k}$
@@ -181,57 +181,50 @@ Il progetto infine contiene un =main= che effettua il parsing dei parametri pass
 
 | solver | # nodes | # buses | seconds to solve |   solution |
 |--------+---------+---------+------------------+------------|
-| gurobi |       3 |       2 |               10 |    47.2431 |
-| greedy |       3 |       2 |                - |    98.9890 |
+| gurobi |       3 |       2 |               10 |   47.2431* |
 | ls     |       3 |       2 |               10 |    47.2431 |
 | ls-ms  |       3 |       2 |               10 |    47.2431 |
 | sa     |       3 |       2 |               10 |    47.2431 |
 |--------+---------+---------+------------------+------------|
-| gurobi |       4 |       2 |               10 |    56.2986 |
-| greedy |       4 |       2 |                - |   141.7909 |
+| gurobi |       4 |       2 |               10 |   56.2986* |
 | ls     |       4 |       2 |               10 |    63.2672 |
 | ls-ms  |       4 |       2 |               10 |    56.2986 |
 | sa     |       4 |       2 |               10 |    56.2986 |
 |--------+---------+---------+------------------+------------|
-| gurobi |       7 |       3 |               10 |   116.6939 |
-| greedy |       7 |       3 |                - |   527.6650 |
+| gurobi |       7 |       3 |               10 |  116.6939* |
 | ls     |       7 |       3 |               10 |   118.4272 |
 | ls-ms  |       7 |       3 |               10 |   116.6939 |
 | sa     |       7 |       3 |               10 |   116.6939 |
 |--------+---------+---------+------------------+------------|
-| gurobi |       9 |       3 |               10 |   202.4896 |
-| greedy |       9 |       3 |                - |  2167.4507 |
+| gurobi |       9 |       3 |               10 |  202.4896* |
 | ls     |       9 |       3 |               10 |   261.5168 |
 | ls-ms  |       9 |       3 |               10 |   202.4896 |
 | sa     |       9 |       3 |               10 |   202.4896 |
 |--------+---------+---------+------------------+------------|
-| gurobi |      11 |      10 |              100 |   213.2659 |
-| greedy |      11 |      10 |                - |   826.6167 |
+| gurobi |      11 |      10 |              100 |  213.2659* |
 | ls     |      11 |      10 |              100 |   227.3628 |
 | ls-ms  |      11 |      10 |              100 |   227.3628 |
 | sa     |      11 |      10 |              100 |   227.3628 |
 |--------+---------+---------+------------------+------------|
 | gurobi |      20 |       5 |              100 |  3238.1498 |
-| greedy |      20 |       5 |                - | 11480.8114 |
 | ls     |      20 |       5 |              100 |  3379.7927 |
 | ls-ms  |      20 |       5 |              100 |  2998.8899 |
 | sa     |      20 |       5 |              100 |  2998.8899 |
 |--------+---------+---------+------------------+------------|
 | gurobi |      41 |       8 |              200 |  772.44067 |
-| greedy |      41 |       8 |                - |  4474.2547 |
 | ls     |      41 |       8 |              200 |   715.7607 |
 | ls-ms  |      41 |       8 |              200 |   660.1733 |
 | sa     |      41 |       8 |              200 |   588.4076 |
 |--------+---------+---------+------------------+------------|
 | gurobi |      52 |      11 |              200 |  4610.3419 |
-| greedy |      52 |      11 |                - | 17768.6750 |
 | ls     |      52 |      11 |              200 |  3131.1859 |
 | ls-ms  |      52 |      11 |              200 |  2984.3199 |
 | sa     |      52 |      11 |              200 |  2889.8812 |
 |--------+---------+---------+------------------+------------|
 | gurobi |     200 |      13 |              200 |          - |
-| greedy |     200 |      13 |                - | 77783.4134 |
-| ls     |     200 |      13 |              200 |            |
+| ls     |     200 |      13 |              200 | 59069.6611 |
 | ls-ms  |     200 |      13 |              200 | 57914.4437 |
 | sa     |     200 |      13 |              200 |  4914.3869 |
 |--------+---------+---------+------------------+------------|
+
+Nota: le soluzioni indicate dall'asterisco rappresentano soluzioni ottime.
