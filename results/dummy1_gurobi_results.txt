@@ -1,0 +1,94 @@
+Model loaded successfully from 'datasets/dummy1.txt'
+Set parameter Username
+Academic license - for non-commercial use only - expires 2023-07-15
+t[0][1]=8.246211251235321
+t[0][2]=16.1245154965971
+t[0][3]=1.4142135623730951
+t[0][4]=5.830951894845301
+t[1][0]=8.246211251235321
+t[1][2]=8.48528137423857
+t[1][3]=7.0710678118654755
+t[1][4]=3.1622776601683795
+t[2][0]=16.1245154965971
+t[2][1]=8.48528137423857
+t[2][3]=14.7648230602334
+t[2][4]=10.295630140987
+t[3][0]=1.4142135623730951
+t[3][1]=7.0710678118654755
+t[3][2]=14.7648230602334
+t[3][4]=4.47213595499958
+t[4][0]=5.830951894845301
+t[4][1]=3.1622776601683795
+t[4][2]=10.295630140987
+t[4][3]=4.47213595499958
+Set parameter TimeLimit to value 10
+Gurobi Optimizer version 9.5.2 build v9.5.2rc0 (linux64)
+Thread count: 8 physical cores, 16 logical processors, using up to 16 threads
+Optimize a model with 106 rows, 78 columns and 408 nonzeros
+Model fingerprint: 0x55543ecc
+Model has 8 general constraints
+Variable types: 30 continuous, 48 integer (48 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+04]
+  Objective range  [1e+00, 2e+01]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+04]
+Presolve added 10 rows and 20 columns
+Presolve time: 0.00s
+Presolved: 116 rows, 98 columns, 416 nonzeros
+Presolved model has 16 SOS constraint(s)
+Variable types: 34 continuous, 64 integer (64 binary)
+
+Root relaxation: objective 2.477162e+01, 47 iterations, 0.00 seconds (0.00 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0   24.77162    0   10          -   24.77162      -     -    0s
+H    0     0                      96.5642940   24.77162  74.3%     -    0s
+H    0     0                      77.4968506   24.77162  68.0%     -    0s
+     0     0   24.77162    0    7   77.49685   24.77162  68.0%     -    0s
+     0     0   25.92796    0    9   77.49685   25.92796  66.5%     -    0s
+H    0     0                      76.6158922   30.32412  60.4%     -    0s
+H    0     0                      63.8944408   30.32412  52.5%     -    0s
+H    0     0                      56.9035237   30.32412  46.7%     -    0s
+     0     0   30.32412    0   14   56.90352   30.32412  46.7%     -    0s
+     0     0   30.88452    0   17   56.90352   30.88452  45.7%     -    0s
+H    0     0                      56.2986131   30.88452  45.1%     -    0s
+     0     2   30.88452    0   17   56.29861   30.88452  45.1%     -    0s
+
+Cutting planes:
+  Implied bound: 5
+  Flow cover: 5
+  Zero half: 1
+  RLT: 5
+  Relax-and-lift: 2
+
+Explored 71 nodes (497 simplex iterations) in 0.02 seconds (0.01 work units)
+Thread count was 16 (of 16 available processors)
+
+Solution count 6: 56.2986 56.9035 63.8944 ... 96.5643
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 5.629861314185e+01, best bound 5.629861314185e+01, gap 0.0000%
+========= SOLUTION ==========
+0 0 38.6
+0 3 40.0
+1 0 17.5
+1 4 23.4
+1 1 26.5
+1 2 35.0
+==========================
+========= SOLUTION (description) ==========
+Bus 0
+	t=38.6	PUB ->  (3) t=40.0
+	t=40.0	(3) ->  PUB
+Bus 1
+	t=17.5	PUB ->  (4) t=23.4
+	t=23.4	(4) ->  (1) t=26.5
+	t=26.5	(1) ->  (2) t=35.0
+	t=35.0	(2) ->  PUB
+==========================================
+========= SOLUTION COST ==========
+56.29861314185927
+==========================================
