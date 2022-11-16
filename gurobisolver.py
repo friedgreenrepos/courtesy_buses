@@ -187,6 +187,19 @@ class GurobiSolver:
                                f"Customer {node_to_string(i)} is brought home by bus {k}")
 
         def compute_trips(passages):
+            """
+            Compute trips using passages extracted from Gurobi solution.
+            From a single list of unordered passages create a list of trips where each trip defines a single bus trip
+            and is chronologically and logically ordered.
+
+            EXAMPLE - each passage is expressed as (i,j,k,t) where i,j are nodes; k a bus; t arrival time at node j.
+
+            passages = [(0,2,1,15), (0,1,0,33), (1,3,0,50), (2,0,1,40), (3,0,0,76)]
+
+            ===>
+
+            trips = [[(0,1,0,33), (1,3,0,50), (3,0,0,76)],[(0,2,1,15),(2,0,1,40)]]
+            """
             trips = [[(i, j, k, t)] for (i, j, k, t) in passages if i == PUB]
             n_picked_edges = len(trips)
             while n_picked_edges < len(passages):
@@ -206,6 +219,7 @@ class GurobiSolver:
             try:
                 x = X[(i, j, k)].x
             except AttributeError:
+                vprint("No solution found.")
                 return None
             if x > EPSILON:
                 # bus k transit from i to j, check when
@@ -213,12 +227,9 @@ class GurobiSolver:
                 passages.append((i, j, k, t))
 
         solution = Solution(self.model)
-
         trips = compute_trips(passages)
         for bus_trip in trips:
             for p in bus_trip:
                 solution.append(bus=p[2], node=p[0], t=p[3])
 
         return solution
-
-
