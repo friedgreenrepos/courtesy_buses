@@ -4,6 +4,15 @@ N=13
 # bus capacity
 Q=18
 
+# trip cost objective function component
+alpha=1
+
+# customer satisfaction objective function component
+beta=1
+
+# conversion factor from arc time to arc cost
+omega=1
+
 CUSTOMERS
 # x y a
 44 48 195
@@ -207,13 +216,3 @@ CUSTOMERS
 46 2 252
 18 19 102
 24 11 66
-
-
-ALPHA
-a=1
-
-BETA
-b=1
-
-OMEGA
-o=1

@@ -32,6 +32,7 @@ t[5][2]=7.0710678118654755
 t[5][3]=7.0
 t[5][4]=4.47213595499958
 Set parameter TimeLimit to value 10
+Set parameter LazyConstraints to value 1
 Gurobi Optimizer version 9.5.2 build v9.5.2rc0 (linux64)
 Thread count: 8 physical cores, 16 logical processors, using up to 16 threads
 Optimize a model with 83 rows, 56 columns and 315 nonzeros
@@ -56,32 +57,68 @@ Root relaxation: objective 2.053392e+01, 19 iterations, 0.00 seconds (0.00 work 
 
      0     0   20.53392    0   15          -   20.53392      -     -    0s
      0     0   20.53392    0   13          -   20.53392      -     -    0s
-     0     0   21.35766    0   13          -   21.35766      -     -    0s
-H    0     0                      67.5958546   35.60152  47.3%     -    0s
-     0     0   36.78849    0   13   67.59585   36.78849  45.6%     -    0s
-H    0     0                      64.3084369   36.78849  42.8%     -    0s
-     0     0   46.39854    0   14   64.30844   46.39854  27.9%     -    0s
-H    0     0                      60.5842391   46.39854  23.4%     -    0s
-     0     0   47.70202    0   15   60.58424   47.70202  21.3%     -    0s
-H    0     0                      58.7581814   47.70202  18.8%     -    0s
-     0     0   48.78267    0   16   58.75818   48.78267  17.0%     -    0s
-     0     0   50.91378    0   10   58.75818   50.91378  13.4%     -    0s
-H    0     0                      58.3156724   50.91378  12.7%     -    0s
+     0     0   20.53392    0   13          -   20.53392      -     -    0s
+     0     0   20.53392    0   13          -   20.53392      -     -    0s
+     0     0   20.53392    0   13          -   20.53392      -     -    0s
+     0     0   20.53392    0   14          -   20.53392      -     -    0s
+     0     0   20.53392    0   14          -   20.53392      -     -    0s
+     0     2   21.35324    0   14          -   21.35324      -     -    0s
+CALLBACK: MIPSOL
+(0, 1, 0)
+(1, 2, 0)
+(2, 4, 0)
+(4, 3, 0)
+(3, 5, 0)
+(5, 0, 0)
+*   50    52               8     137.7877660   23.40906  83.0%   4.8    0s
+CALLBACK: MIPSOL
+(0, 1, 0)
+(1, 5, 0)
+(5, 4, 0)
+(4, 3, 0)
+(3, 2, 0)
+(2, 0, 0)
+H   52    52                      88.9349419   23.40906  73.7%   4.7    0s
+CALLBACK: MIPSOL
+(0, 5, 0)
+(5, 3, 0)
+(3, 4, 0)
+(4, 2, 0)
+(2, 1, 0)
+(1, 0, 0)
+*   79    32               9      75.4244354   25.14196  66.7%   5.0    0s
+CALLBACK: MIPSOL
+(0, 4, 0)
+(4, 5, 0)
+(5, 1, 0)
+(1, 3, 0)
+(3, 2, 0)
+(2, 0, 0)
+*   91    32               7      75.2481778   25.14196  66.6%   5.3    0s
+CALLBACK: MIPSOL
+(0, 5, 0)
+(5, 4, 0)
+(4, 1, 0)
+(1, 3, 0)
+(3, 2, 0)
+(2, 0, 0)
+H   94    32                      58.3156724   25.14196  56.9%   5.3    0s
 
 Cutting planes:
-  Learned: 2
-  Implied bound: 6
-  MIR: 6
-  RLT: 8
-  Relax-and-lift: 3
+  Gomory: 1
+  Implied bound: 5
+  MIR: 7
+  RLT: 4
 
-Explored 1 nodes (119 simplex iterations) in 0.01 seconds (0.00 work units)
+Explored 155 nodes (964 simplex iterations) in 0.02 seconds (0.01 work units)
 Thread count was 16 (of 16 available processors)
 
-Solution count 5: 58.3157 58.7582 60.5842 ... 67.5959
+Solution count 5: 58.3157 75.2482 75.4244 ... 137.788
 
 Optimal solution found (tolerance 1.00e-04)
-Best objective 5.831567243777e+01, best bound 5.831567243777e+01, gap 0.0000%
+Best objective 5.831567243776e+01, best bound 5.831567243776e+01, gap 0.0000%
+
+User-callback calls 570, time in user-callback 0.00 sec
 ========= SOLUTION ==========
 0 0 13.4
 0 5 21.1
@@ -100,5 +137,5 @@ Bus 0
 	t=40.8	(2) ->  PUB
 ==========================================
 ========= SOLUTION COST ==========
-58.315672437769244
+58.31567243776139
 ==========================================
