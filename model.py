@@ -24,9 +24,6 @@ class Model:
             with Path(filename).open() as f:
                 SECTION_HEADER = 0
                 SECTION_CUSTOMERS = 1
-                SECTION_ALPHA = 2
-                SECTION_BETA = 3
-                SECTION_OMEGA = 4
 
                 section = SECTION_HEADER
 
@@ -44,18 +41,6 @@ class Model:
                         section = SECTION_CUSTOMERS
                         continue
 
-                    if line == "ALPHA":
-                        section = SECTION_ALPHA
-                        continue
-
-                    if line == "BETA":
-                        section = SECTION_ALPHA
-                        continue
-
-                    if line == "OMEGA":
-                        section = SECTION_ALPHA
-                        continue
-
                     # header
                     if section == SECTION_HEADER:
                         if is_key_value(line, "N"):
@@ -64,6 +49,15 @@ class Model:
                         if is_key_value(line, "Q"):
                             self.Q = int(get_value_from_key_value(line))
                             continue
+                        if is_key_value(line, "alpha"):
+                            self.alpha = int(get_value_from_key_value(line))
+                            continue
+                        if is_key_value(line, "beta"):
+                            self.beta = int(get_value_from_key_value(line))
+                            continue
+                        if is_key_value(line, "omega"):
+                            self.omega = int(get_value_from_key_value(line))
+                            continue
 
                     # customers
                     if section == SECTION_CUSTOMERS:
@@ -71,20 +65,6 @@ class Model:
                         self.customers.append((int(x), int(y), int(a)))
                         continue
 
-                    # alpha
-                    if section == SECTION_ALPHA:
-                        self.alpha = int(get_value_from_key_value(line))
-                        continue
-
-                    # beta
-                    if section == SECTION_BETA:
-                        self.beta = int(get_value_from_key_value(line))
-                        continue
-
-                    # omega
-                    if section == SECTION_OMEGA:
-                        self.omega = int(get_value_from_key_value(line))
-                        continue
             return True
         except Exception as e:
             eprint(f"ERROR: failed to parse file: {e}")
