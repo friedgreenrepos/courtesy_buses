@@ -1,3 +1,4 @@
+import json
 from typing import Dict
 
 from model import Model
@@ -146,45 +147,113 @@ class GurobiSolver:
 
             gurobipy.GRB.MINIMIZE)
 
+        def dump_solution():
+            if verbose:
+                vprint("--- X ---")
+                for (i, j, k) in A:
+                    if X[(i, j, k)].x > EPSILON:
+                        vprint(f"{X[(i, j, k)].varname}={X[(i, j, k)].x}\t"
+                               f"Bus {k} travels from {node_to_string(i)} to {node_to_string(j)}")
+                vprint("--- Y ---")
+                for i in V:
+                    for k in K:
+                        if Y[(i, k)].x > EPSILON or i == PUB:
+                            verb = "starts from" if i == PUB else "arrives at"
+                            vprint(f"{Y[(i, k)].varname}={Y[(i, k)].x:.1f}\t"
+                                   f"Bus {k} {verb} {node_to_string(i)} at time {Y[(i, k)].x:.1f}")
+                vprint("--- Z ---")
+                for i in C:
+                    if Z[i].x > EPSILON:
+                        vprint(f"{Z[i].varname}={Z[i].x:.1f}\t"
+                               f"Customer {node_to_string(i)} arrives at home at time {Z[i].x:.1f}")
+                vprint("--- W ---")
+                for i in C:
+                    for k in K:
+                        if W[(i, k)].x > EPSILON:
+                            vprint(f"{W[(i, k)].varname}={W[(i, k)].x}\t"
+                                   f"Customer {node_to_string(i)} is brought home by bus {k}")
+
+        # Callback
+        def callback(model, where):
+            def detect_subtours(passages):
+                trip = []
+                trips = []
+                while passages:
+                    for p in passages:
+                        if not trip or trip[-1][1] == p[0] and trip[-1][2] == p[2]:
+                            # either this is the first passage of a new trip
+                            # or the passage p is linked to the last passage
+                            print(p)
+                            trip.append(p)
+                            passages.remove(p)
+                            break
+
+                    # check whether the trip is closed
+                    if trip and trip[0][0] == trip[-1][1]:
+                        # add closed trip to the list of all trips and reset current trip
+                        trips.append(trip)
+                        trip = []
+
+                bad_trips = []
+
+                # the bad subtours are the one that do not pass through the PUB
+                for trip in trips:
+                    for p in trip:
+                        if p[0] == PUB:
+                            break
+                    else:
+                        # PUB has never been found through the passages of the trips
+                        bad_trips.append(trip)
+
+                # vprint(f"Trips: {json.dumps(trips, indent=4)}")
+                vprint(f"Bad Trips: {json.dumps(bad_trips, indent=4)}")
+
+                return bad_trips
+
+            if where == gurobipy.GRB.Callback.MIPSOL:
+                print("CALLBACK: MIPSOL")
+
+                # Get the X of the current solution
+                current_X = model.cbGetSolution(X)
+
+                # Build the passages
+                passages = []
+                for (a, val) in current_X.items():
+                    if val > EPSILON:
+                        passages.append(a)
+
+                bad_trips = detect_subtours(passages)
+
+                if bad_trips:
+                    # add subtour elimination constraints
+                    for bad_trip in bad_trips:
+                        vprint(f"Adding Subtour Elimination Constraints for trip: {bad_trip}")
+                        model.cbLazy(quicksum(X[(i, j, k)] for (i, j, k) in bad_trip) <= len(bad_trip) - 1)
+
         if self.max_time:
             m.setParam('Timelimit', self.max_time)
+
+        # enable lazy constraints (for SEC)
+        m.Params.LazyConstraints = 1
 
         # save LP
         m.write("courtesy-buses.lp")
 
         # solve
-        m.optimize()
+        m.optimize(callback)
+
+        # save SOL
+        try:
+            m.write("courtesy-buses.sol")
+        except gurobipy.GurobiError as e:
+            vprint(f"Error in saving solution: {e}")
 
         # unfeasible: compute and save IIS
         if m.getAttr("status") == gurobipy.GRB.INFEASIBLE:
+            vprint("Computing .ilp")
             m.computeIIS()
             m.write("courtesy-buses.ilp")
             return None
-
-        if verbose:
-            vprint("--- X ---")
-            for (i, j, k) in A:
-                if X[(i, j, k)].x > EPSILON:
-                    vprint(f"{X[(i, j, k)].varname}={X[(i, j, k)].x}\t"
-                           f"Bus {k} travels from {node_to_string(i)} to {node_to_string(j)}")
-            vprint("--- Y ---")
-            for i in V:
-                for k in K:
-                    if Y[(i, k)].x > EPSILON or i == PUB:
-                        verb = "starts from" if i == PUB else "arrives at"
-                        vprint(f"{Y[(i, k)].varname}={Y[(i, k)].x:.1f}\t"
-                               f"Bus {k} {verb} {node_to_string(i)} at time {Y[(i, k)].x:.1f}")
-            vprint("--- Z ---")
-            for i in C:
-                if Z[i].x > EPSILON:
-                    vprint(f"{Z[i].varname}={Z[i].x:.1f}\t"
-                           f"Customer {node_to_string(i)} arrives at home at time {Z[i].x:.1f}")
-            vprint("--- W ---")
-            for i in C:
-                for k in K:
-                    if W[(i, k)].x > EPSILON:
-                        vprint(f"{W[(i, k)].varname}={W[(i, k)].x}\t"
-                               f"Customer {node_to_string(i)} is brought home by bus {k}")
 
         def compute_trips(passages):
             """
@@ -203,15 +272,22 @@ class GurobiSolver:
             trips = [[(i, j, k, t)] for (i, j, k, t) in passages if i == PUB]
             n_picked_edges = len(trips)
             while n_picked_edges < len(passages):
+                closed_trips = 0
                 for trip in trips:
                     if trip[-1][1] == PUB:
+                        closed_trips += 1
                         continue  # closed
                     for (i, j, k, t) in passages:
                         if i == trip[-1][1]:
                             trip.append((i, j, k, t))
                             n_picked_edges += 1
                             break
+                if closed_trips == len(trips) and n_picked_edges < len(passages):
+                    print("ERROR: sub-tour detected")
+                    break
             return trips
+
+        dump_solution()
 
         # build solution object
         passages = []
