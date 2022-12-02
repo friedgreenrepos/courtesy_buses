@@ -2,7 +2,7 @@
 
 # gurobi
 echo "solving dummy0 with gurobi solver ..."
-python main.py datasets/dummy0_gurobi.txt -o "solver.max_time=10" > results/dummy0_gurobi_results.txt
+python main.py datasets/dummy0.txt -o "solver.max_time=10" > results/dummy0_gurobi_results.txt
 echo "dummy0 solved with gurobi"
 
 echo "solving dummy1 with gurobi solver ..."
@@ -67,7 +67,7 @@ echo "dummy15 solved with gurobi solver"
 
 ## greedy
 #echo "solving dummy0 with greedy solver ..."
-#python main.py datasets/dummy0_greedy.txt -H none -o "solver.max_time=10" > results/dummy0_greedy_results.txt
+#python main.py datasets/dummy0.txt -H none -o "solver.max_time=10" > results/dummy0_greedy_results.txt
 #echo "dummy0 solved with greedy solver"
 #
 #echo "solving dummy1 with greedy solver ..."
@@ -112,7 +112,7 @@ echo "dummy15 solved with gurobi solver"
 
 # local search
 echo "solving dummy0 with local search ..."
-python main.py datasets/dummy0_ls.txt -H ls -o "solver.max_time=10" > results/dummy0_ls_results.txt
+python main.py datasets/dummy0.txt -H ls -o "solver.max_time=10" > results/dummy0_ls_results.txt
 echo "dummy0 solved with local search"
 
 echo "solving dummy1 with local search ..."
@@ -178,7 +178,7 @@ echo "dummy15 solved with local search"
 
 # local search multistart
 echo "solving dummy0 with local search multistart ..."
-python main.py datasets/dummy0_lsms.txt -H ls -m -o "solver.max_time=10" > results/dummy0_lsms_results.txt
+python main.py datasets/dummy0.txt -H ls -m -o "solver.max_time=10" > results/dummy0_lsms_results.txt
 echo "dummy0 solved with local search multistart"
 
 echo "solving dummy1 with local search multistart..."
@@ -243,7 +243,7 @@ echo "dummy15 solved with local search multistart"
 
 # simulated annealing
 echo "solving dummy0 with simulated annealing ..."
-python main.py datasets/dummy0_sa.txt -H sa -o "solver.max_time=10" > results/dummy0_sa_results.txt
+python main.py datasets/dummy0.txt -H sa -o "solver.max_time=10" > results/dummy0_sa_results.txt
 echo "dummy0 solved with simulated annealing"
 
 echo "solving dummy1 with simulated annealing ..."
@@ -308,7 +308,7 @@ echo "dummy15 solved with simulated annealing"
 
 # simulated annealing multistart
 echo "solving dummy0 with simulated annealing multistart ..."
-python main.py datasets/dummy0_sa.txt -H sa -m -o "solver.max_time=10" > results/dummy0_sams_results.txt
+python main.py datasets/dummy0.txt -H sa -m -o "solver.max_time=10" > results/dummy0_sams_results.txt
 echo "dummy0 solved with simulated annealing multistart"
 
 echo "solving dummy1 with simulated annealing multistart ..."
