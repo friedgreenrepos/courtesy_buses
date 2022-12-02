@@ -1,0 +1,96 @@
+Model loaded successfully from 'datasets/dummy0.txt'
+Set parameter Username
+Academic license - for non-commercial use only - expires 2023-07-15
+t[0][1]=7.0710678118654755
+t[0][2]=8.246211251235321
+t[0][3]=12.206555615733702
+t[1][0]=7.0710678118654755
+t[1][2]=4.242640687119285
+t[1][3]=5.385164807134504
+t[2][0]=8.246211251235321
+t[2][1]=4.242640687119285
+t[2][3]=5.385164807134504
+t[3][0]=12.206555615733702
+t[3][1]=5.385164807134504
+t[3][2]=5.385164807134504
+Set parameter TimeLimit to value 10
+Set parameter LazyConstraints to value 1
+Gurobi Optimizer version 9.5.2 build v9.5.2rc0 (linux64)
+Thread count: 8 physical cores, 16 logical processors, using up to 16 threads
+Optimize a model with 69 rows, 53 columns and 240 nonzeros
+Model fingerprint: 0x5c70deec
+Model has 6 general constraints
+Variable types: 23 continuous, 30 integer (30 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+04]
+  Objective range  [1e+00, 1e+01]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+04]
+Presolve added 7 rows and 18 columns
+Presolve time: 0.00s
+Presolved: 76 rows, 71 columns, 255 nonzeros
+Presolved model has 12 SOS constraint(s)
+Variable types: 29 continuous, 42 integer (42 binary)
+CALLBACK: MIPSOL
+(0, 1, 0)
+(1, 2, 0)
+(2, 0, 0)
+(0, 3, 1)
+(3, 0, 1)
+Found heuristic solution: objective 49.7303903
+
+Root relaxation: objective 1.501297e+01, 36 iterations, 0.00 seconds (0.00 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0   15.01297    0    9   49.73039   15.01297  69.8%     -    0s
+     0     0   15.01297    0    9   49.73039   15.01297  69.8%     -    0s
+     0     0   20.77238    0   26   49.73039   20.77238  58.2%     -    0s
+     0     0   25.32862    0   23   49.73039   25.32862  49.1%     -    0s
+     0     0   26.67062    0   27   49.73039   26.67062  46.4%     -    0s
+     0     0   28.27708    0   27   49.73039   28.27708  43.1%     -    0s
+CALLBACK: MIPSOL
+(0, 1, 1)
+(1, 3, 1)
+(3, 2, 1)
+(2, 0, 1)
+H    0     0                      47.2431031   28.27708  40.1%     -    0s
+     0     0   30.08057    0   24   47.24310   30.08057  36.3%     -    0s
+     0     0   30.08057    0   26   47.24310   30.08057  36.3%     -    0s
+     0     0   30.08057    0   26   47.24310   30.08057  36.3%     -    0s
+     0     0   30.08057    0    2   47.24310   30.08057  36.3%     -    0s
+     0     0   30.08057    0    2   47.24310   30.08057  36.3%     -    0s
+     0     2   30.08057    0    2   47.24310   30.08057  36.3%     -    0s
+
+Cutting planes:
+  Implied bound: 16
+  MIR: 4
+  Flow cover: 2
+  Relax-and-lift: 2
+
+Explored 45 nodes (364 simplex iterations) in 0.02 seconds (0.01 work units)
+Thread count was 16 (of 16 available processors)
+
+Solution count 2: 47.2431 49.7304 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 4.724310309874e+01, best bound 4.724310309874e+01, gap 0.0000%
+
+User-callback calls 283, time in user-callback 0.00 sec
+========= SOLUTION ==========
+1 0 22.9
+1 1 30.0
+1 3 35.4
+1 2 40.8
+==========================
+========= SOLUTION (description) ==========
+Bus 1
+	t=22.9	PUB ->  (1) t=30.0
+	t=30.0	(1) ->  (3) t=35.4
+	t=35.4	(3) ->  (2) t=40.8
+	t=40.8	(2) ->  PUB
+==========================================
+========= SOLUTION COST ==========
+47.24310309874671
+==========================================

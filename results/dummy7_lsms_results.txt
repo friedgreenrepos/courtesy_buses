@@ -1,9 +1,4 @@
 Model loaded successfully from 'datasets/dummy7.txt'
-***NEW BEST = 3167.4756248564413***
-***NEW BEST = 3081.473436000426***
-***NEW BEST = 3031.5795869172844***
-***NEW BEST = 2998.889906375598***
-***NEW BEST = 2998.8899063755975***
 ***NEW BEST = 2998.889906375597***
 ========= SOLUTION ==========
 0 0 10.0

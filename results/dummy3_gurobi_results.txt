@@ -118,7 +118,7 @@ Solution count 5: 58.3157 75.2482 75.4244 ... 137.788
 Optimal solution found (tolerance 1.00e-04)
 Best objective 5.831567243776e+01, best bound 5.831567243776e+01, gap 0.0000%
 
-User-callback calls 570, time in user-callback 0.00 sec
+User-callback calls 569, time in user-callback 0.00 sec
 ========= SOLUTION ==========
 0 0 13.4
 0 5 21.1

@@ -97051,11 +97051,11 @@ Presolve removed 6531 rows and 6220 columns (presolve time = 10s) ...
 Presolve removed 6531 rows and 6220 columns (presolve time = 15s) ...
 Presolve removed 6531 rows and 6220 columns (presolve time = 20s) ...
 Presolve removed 6531 rows and 6220 columns (presolve time = 25s) ...
-Presolve removed 6531 rows and 6220 columns (presolve time = 202s) ...
+Presolve removed 6531 rows and 6220 columns (presolve time = 201s) ...
 Presolve added 12129 rows and 18660 columns
-Presolve time: 202.25s
+Presolve time: 200.76s
 
-Explored 0 nodes (0 simplex iterations) in 202.66 seconds (135.51 work units)
+Explored 0 nodes (0 simplex iterations) in 201.16 seconds (143.29 work units)
 Thread count was 1 (of 16 available processors)
 
 Solution count 0
@@ -97063,4 +97063,4 @@ Solution count 0
 Time limit reached
 Best objective -, best bound -, gap -
 
-User-callback calls 161441, time in user-callback 2.01 sec
+User-callback calls 160867, time in user-callback 2.04 sec

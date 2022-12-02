@@ -125,7 +125,7 @@ Coefficient statistics:
   Bounds range     [1e+00, 1e+00]
   RHS range        [1e+00, 1e+04]
 Presolve added 70 rows and 120 columns
-Presolve time: 0.03s
+Presolve time: 0.01s
 Presolved: 1032 rows, 734 columns, 4890 nonzeros
 Presolved model has 80 SOS constraint(s)
 Variable types: 174 continuous, 560 integer (560 binary)
@@ -290,7 +290,7 @@ CALLBACK: MIPSOL
 (0, 9, 3)
 (9, 8, 3)
 (8, 0, 3)
-H 1154   748                     365.9431593   54.79569  85.0%  16.7    1s
+H 1154   748                     365.9431593   54.79569  85.0%  16.7    0s
 CALLBACK: MIPSOL
 (0, 3, 3)
 (3, 10, 3)
@@ -306,7 +306,7 @@ CALLBACK: MIPSOL
 (4, 0, 1)
 (0, 8, 0)
 (8, 0, 0)
-* 1161   739              55     359.4637482   54.79569  84.8%  16.7    1s
+* 1161   739              55     359.4637482   54.79569  84.8%  16.7    0s
 CALLBACK: MIPSOL
 (0, 3, 3)
 (3, 9, 3)
@@ -338,7 +338,7 @@ CALLBACK: MIPSOL
 (5, 0, 2)
 (0, 8, 0)
 (8, 0, 0)
-H 1504   784                     292.6390082  113.43071  61.2%  16.6    2s
+H 1504   784                     292.6390082  113.43071  61.2%  16.6    1s
 CALLBACK: MIPSOL
 (0, 2, 3)
 (2, 0, 3)
@@ -354,7 +354,7 @@ CALLBACK: MIPSOL
 (10, 7, 1)
 (7, 6, 1)
 (6, 0, 1)
-H 1528   759                     261.7735351  159.99967  38.9%  16.4    3s
+H 1528   759                     261.7735351  159.99967  38.9%  16.4    2s
 CALLBACK: MIPSOL
 (0, 2, 3)
 (2, 0, 3)
@@ -370,8 +370,7 @@ CALLBACK: MIPSOL
 (7, 0, 1)
 (0, 8, 2)
 (8, 0, 2)
-H 1541   728                     223.8822242  175.06348  21.8%  16.2    3s
-  1577   753  219.17391   35  105  223.88222  181.20907  19.1%  20.2    5s
+H 1541   728                     223.8822242  175.06348  21.8%  16.2    2s
 CALLBACK: MIPSOL
 (0, 5, 0)
 (5, 1, 0)
@@ -387,7 +386,7 @@ CALLBACK: MIPSOL
 (9, 10, 1)
 (10, 7, 1)
 (7, 0, 1)
-H 1690   777                     220.5432662  183.47842  16.8%  22.2    6s
+H 1690   777                     220.5432662  183.47842  16.8%  22.2    4s
 CALLBACK: MIPSOL
 (0, 4, 3)
 (4, 2, 3)
@@ -403,7 +402,7 @@ CALLBACK: MIPSOL
 (7, 0, 1)
 (0, 8, 2)
 (8, 0, 2)
-H 1700   736                     218.6696509  183.47842  16.1%  22.2    6s
+H 1700   736                     218.6696509  183.47842  16.1%  22.2    4s
 CALLBACK: MIPSOL
 (0, 2, 2)
 (2, 9, 2)
@@ -419,7 +418,7 @@ CALLBACK: MIPSOL
 (1, 0, 0)
 (0, 8, 1)
 (8, 0, 1)
-H 1970   717                     212.6626341  184.13787  13.4%  21.3    6s
+H 1970   717                     212.6626341  184.13787  13.4%  21.3    4s
 CALLBACK: MIPSOL
 (0, 4, 0)
 (4, 6, 0)
@@ -435,7 +434,7 @@ CALLBACK: MIPSOL
 (9, 10, 2)
 (10, 7, 2)
 (7, 0, 2)
-* 2230   671              46     209.3354521  184.14873  12.0%  20.9    6s
+* 2230   671              46     209.3354521  184.14873  12.0%  20.9    4s
 CALLBACK: MIPSOL
 (0, 4, 0)
 (4, 6, 0)
@@ -451,30 +450,30 @@ CALLBACK: MIPSOL
 (9, 10, 2)
 (10, 7, 2)
 (7, 0, 2)
-* 2231   638              45     205.3424689  184.14873  10.3%  20.9    6s
-  7552   820  191.42128   49   33  205.34247  191.34641  6.82%  18.8   10s
+* 2231   638              45     205.3424689  184.14873  10.3%  20.9    4s
+  2510   653  185.38167   42   42  205.34247  184.14940  10.3%  20.6    5s
 
 Cutting planes:
   Gomory: 13
-  Cover: 14
-  Implied bound: 57
+  Cover: 17
+  Implied bound: 66
   Clique: 3
-  MIR: 8
-  Flow cover: 86
+  MIR: 10
+  Flow cover: 88
   Inf proof: 6
-  Zero half: 3
+  Zero half: 4
   RLT: 3
   Relax-and-lift: 107
 
-Explored 7671 nodes (145251 simplex iterations) in 10.04 seconds (6.84 work units)
+Explored 11515 nodes (206789 simplex iterations) in 7.60 seconds (7.45 work units)
 Thread count was 16 (of 16 available processors)
 
 Solution count 10: 205.342 209.335 212.663 ... 359.464
 
-Time limit reached
-Best objective 2.053424689215e+02, best bound 1.913464122472e+02, gap 6.8160%
+Optimal solution found (tolerance 1.00e-04)
+Best objective 2.053424689215e+02, best bound 2.053424689215e+02, gap 0.0000%
 
-User-callback calls 19204, time in user-callback 0.12 sec
+User-callback calls 26362, time in user-callback 0.10 sec
 ========= SOLUTION ==========
 0 0 60.5
 0 4 68.3

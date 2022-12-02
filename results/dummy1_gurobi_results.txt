@@ -98,7 +98,7 @@ Cutting planes:
   StrongCG: 2
   Flow cover: 5
 
-Explored 106 nodes (688 simplex iterations) in 0.02 seconds (0.01 work units)
+Explored 106 nodes (688 simplex iterations) in 0.03 seconds (0.01 work units)
 Thread count was 16 (of 16 available processors)
 
 Solution count 5: 56.2986 56.9035 63.2672 ... 136.577
@@ -106,7 +106,7 @@ Solution count 5: 56.2986 56.9035 63.2672 ... 136.577
 Optimal solution found (tolerance 1.00e-04)
 Best objective 5.629861314194e+01, best bound 5.629861314194e+01, gap 0.0000%
 
-User-callback calls 395, time in user-callback 0.00 sec
+User-callback calls 402, time in user-callback 0.00 sec
 ========= SOLUTION ==========
 0 0 17.5
 0 4 23.4

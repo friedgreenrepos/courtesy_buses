@@ -403,7 +403,7 @@ Cutting planes:
   RLT: 3
   Relax-and-lift: 79
 
-Explored 5136 nodes (76534 simplex iterations) in 3.26 seconds (3.32 work units)
+Explored 5136 nodes (76534 simplex iterations) in 3.29 seconds (3.32 work units)
 Thread count was 16 (of 16 available processors)
 
 Solution count 10: 202.49 206.483 307.379 ... 699.868
@@ -411,7 +411,7 @@ Solution count 10: 202.49 206.483 307.379 ... 699.868
 Optimal solution found (tolerance 1.00e-04)
 Best objective 2.024896571005e+02, best bound 2.024896571005e+02, gap 0.0000%
 
-User-callback calls 11985, time in user-callback 0.04 sec
+User-callback calls 11992, time in user-callback 0.04 sec
 ========= SOLUTION ==========
 0 0 238.6
 0 8 265.0

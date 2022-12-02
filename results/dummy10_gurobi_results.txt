@@ -40618,7 +40618,7 @@ Coefficient statistics:
   RHS range        [1e+00, 1e+04]
 Presolve removed 2814 rows and 2613 columns (presolve time = 14s) ...
 Presolve added 5025 rows and 7839 columns
-Presolve time: 14.27s
+Presolve time: 13.89s
 Presolved: 1063932 rows, 546331 columns, 5286300 nonzeros
 Presolved model has 5226 SOS constraint(s)
 Variable types: 10666 continuous, 535665 integer (535665 binary)
@@ -40641,10 +40641,10 @@ Barrier statistics:
 Iter       Primal          Dual         Primal    Dual     Compl     Time
    0   1.10269120e+09 -2.93243835e+08  2.09e+08 0.00e+00  2.86e+05    22s
    1   1.75282629e+07 -4.71431154e+08  1.17e+06 6.75e-01  4.52e+03    22s
-   2   2.80306158e+06 -1.35403088e+08  4.78e+05 1.33e-02  1.18e+03    23s
-   3   4.98576154e+04 -2.64057844e+06  1.12e+00 1.06e-04  1.65e+01    23s
-   4   6.75064895e+03 -1.23692186e+05  3.45e-03 4.97e-06  7.97e-01    23s
-   5   4.34158954e+03 -5.71225227e+04  1.81e-05 6.34e-07  3.76e-01    23s
+   2   2.80306158e+06 -1.35403088e+08  4.78e+05 1.33e-02  1.18e+03    22s
+   3   4.98576154e+04 -2.64057844e+06  1.12e+00 1.06e-04  1.65e+01    22s
+   4   6.75064895e+03 -1.23692186e+05  3.45e-03 4.97e-06  7.97e-01    22s
+   5   4.34158954e+03 -5.71225227e+04  1.81e-05 6.34e-07  3.76e-01    22s
    6   2.78325424e+03 -2.10973126e+04  2.78e-08 2.46e-07  1.46e-01    23s
    7   1.69537537e+03 -8.90606731e+03  1.20e-08 8.72e-08  6.48e-02    23s
    8   7.76419283e+02 -1.76688645e+03  8.87e-10 1.85e-08  1.56e-02    23s
@@ -40655,7 +40655,7 @@ Iter       Primal          Dual         Primal    Dual     Compl     Time
   13   4.35754803e+02  4.35754744e+02  1.06e-11 2.27e-13  3.62e-10    23s
   14   4.35754786e+02  4.35754786e+02  7.84e-12 2.27e-13  4.17e-16    23s
 
-Barrier solved model in 14 iterations and 23.10 seconds (21.81 work units)
+Barrier solved model in 14 iterations and 22.95 seconds (21.81 work units)
 Optimal objective 4.35754786e+02
 
 
@@ -40692,21 +40692,21 @@ Root simplex log...
 
 Iteration    Objective       Primal Inf.    Dual Inf.      Time
     9738    4.3575479e+02   0.000000e+00   1.817461e+00     26s
-Concurrent spin time: 0.75s (can be avoided by choosing Method=3)
+Concurrent spin time: 0.84s (can be avoided by choosing Method=3)
 
 Solved with dual simplex
 
-Root relaxation: objective 4.357548e+02, 8552 iterations, 7.16 seconds (5.68 work units)
-Total elapsed time = 35.05s
-Total elapsed time = 41.53s
-Total elapsed time = 45.01s
+Root relaxation: objective 4.357548e+02, 8552 iterations, 7.58 seconds (5.68 work units)
+Total elapsed time = 35.26s
+Total elapsed time = 41.78s
+Total elapsed time = 45.34s
 
     Nodes    |    Current Node    |     Objective Bounds      |     Work
  Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
 
      0     0  435.75479    0 1048          -  435.75479      -     -   47s
-     0     0  435.75479    0 1736          -  435.75479      -     -  105s
-     0     0  435.75479    0 1759          -  435.75479      -     -  201s
+     0     0  435.75479    0 1736          -  435.75479      -     -  102s
+     0     0  435.75479    0 1759          -  435.75479      -     -  200s
 
 Cutting planes:
   Learned: 27
@@ -40717,7 +40717,7 @@ Cutting planes:
   RLT: 3
   Relax-and-lift: 1
 
-Explored 1 nodes (22091 simplex iterations) in 201.47 seconds (105.54 work units)
+Explored 1 nodes (22091 simplex iterations) in 200.60 seconds (107.71 work units)
 Thread count was 16 (of 16 available processors)
 
 Solution count 0
@@ -40725,4 +40725,4 @@ Solution count 0
 Time limit reached
 Best objective -, best bound 4.357547856422e+02, gap -
 
-User-callback calls 14422, time in user-callback 0.19 sec
+User-callback calls 14125, time in user-callback 0.17 sec

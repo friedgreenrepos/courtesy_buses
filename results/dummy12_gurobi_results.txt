@@ -10115,7 +10115,7 @@ Coefficient statistics:
   Bounds range     [1e+00, 1e+00]
   RHS range        [1e+00, 1e+04]
 Presolve added 1900 rows and 3000 columns
-Presolve time: 2.19s
+Presolve time: 2.09s
 Presolved: 205230 rows, 108110 columns, 1013100 nonzeros
 Presolved model has 2000 SOS constraint(s)
 Variable types: 4110 continuous, 104000 integer (104000 binary)
@@ -10128,12 +10128,12 @@ Root relaxation presolved: 204230 rows, 107110 columns, 1011100 nonzeros
 
 
 Use crossover to convert LP symmetric solution to basic solution...
-Concurrent spin time: 0.13s
+Concurrent spin time: 0.15s
 
 Solved with dual simplex (primal model)
 
-Root relaxation: objective 1.151920e+04, 3307 iterations, 1.32 seconds (0.97 work units)
-Total elapsed time = 5.30s
+Root relaxation: objective 1.151920e+04, 3307 iterations, 1.33 seconds (0.97 work units)
+Total elapsed time = 5.20s
 
     Nodes    |    Current Node    |     Objective Bounds      |     Work
  Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
@@ -10158,7 +10158,7 @@ Cutting planes:
   RLT: 19
   Relax-and-lift: 19
 
-Explored 1 nodes (40787 simplex iterations) in 200.01 seconds (83.22 work units)
+Explored 1 nodes (40787 simplex iterations) in 200.17 seconds (83.33 work units)
 Thread count was 16 (of 16 available processors)
 
 Solution count 0
@@ -10166,4 +10166,4 @@ Solution count 0
 Time limit reached
 Best objective -, best bound 1.151919748356e+04, gap -
 
-User-callback calls 9517, time in user-callback 0.13 sec
+User-callback calls 9574, time in user-callback 0.13 sec

@@ -1,5 +1,4 @@
 Model loaded successfully from 'datasets/dummy6.txt'
-***NEW BEST = 211.4539251035151***
 ***NEW BEST = 205.34246892351342***
 ***NEW BEST = 205.3424689235134***
 ========= SOLUTION ==========
