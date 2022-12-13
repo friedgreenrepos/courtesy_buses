@@ -80,8 +80,8 @@ class GurobiSolver:
 
         # CONSTRAINTS
 
-        M1 = 10000  # TODO: better estimation: ~ in the scale of the longest trip?
-        M2 = 10000  # TODO: better estimation: ~ in the scale of the longest trip?
+        M1 = 10000
+        M2 = 10000
 
         # H1: bus capacity
         m.addConstrs((quicksum(X[(i, j, k)]
