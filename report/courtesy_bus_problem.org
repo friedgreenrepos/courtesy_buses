@@ -8,11 +8,9 @@ Il problema di vehicle routing (VRP) è un classico problema di ottimizzazione c
 [[file:Il_problema_in_letteratura/2023-01-17_11-09-35_screenshot.png]]
 Come già menzionato esistono parecchie varianti del problema VRP nelle quali cambiano, o si aggiungono, vincoli di capacità, tempo, punti di partenza, numero di viaggi, etc. La variante del problema implementata in questo progetto può essere considerata come una sotto-variante del CVRPTW (i.e. /Capacitated Vehicle Routing Problem with Time Windows/) nella quale i veicoli hanno una capacità limitata e sono presenti vincoli di tempo per la consegna.
 ** Metodi di soluzione esatti
-Per quanto riguarda il VRP classico esistono tre principali approcci alla modellazione del problema [fn:2]
-1) Formulazionni basate sul flusso di veicoli: vengono usate variabili intere associate ad ogni arco per contare il numero di volte che quest'ultimo è attraversato da un veicolo.[fn:3]
-2) Formulazioni basate sul flusso dei beni: vengono aggiunte altre variabili intere associate agli archi per rappresentare il flusso dei beni attraverso i path percorsi dai veicoli[fn:3]
-3) Problema di /set partitioning/: vengono usate un numero esponenziale di variabili binarie associate ad ogni possibile percorso. Il VRP viene dunque formulato come un problema di partizione di insiemi nel quale viene richiesto di trovare il gruppo di percorsi di costo minimo che soddisfino i vincoli del problema.[fn:3]
-Una possibile formulazione dell'approccio 1 in programmazione lineare intera è la seguente:
+La principale tecnica impiegata per la risoluzione di VRP è la programmazione lineare intera (ILP). Esistono diverse modellazioni del problema - nelle sezioni successive ne vengono descritte due tra le più conosciute: la modellazione compatta, con un numero di variabili e vincoli polinomiale e la modellazione estesa, ovvero con variabili e vincoli in numero esponenziale.
+*** Modello compatto
+Una possibile formulazione del problema tramite ILP è la seguente:
 \begin{align}
 \nonumber \textrm{min} \sum_{i,j \in V}c_{ij} \sum_{k \in K} x_{ijk} \\
 \nonumber \textrm{sub. to} \\
@@ -38,8 +36,36 @@ Si indica con $S$ il subtour e con $|S|$ il numero dei nodi che lo compongono. P
 #+DOWNLOADED: screenshot @ 2023-01-19 12:30:36
 #+name: fig:subtour_2
 [[file:Il_problema_in_letteratura/2023-01-19_12-30-36_screenshot.png]]
-Il numero dei subtour è esponenziale nel numero di nodi del problema, per questo motivo spesso si ricorre a tecniche "lazy", ovvero si agisce sui subtour solo nel caso siano presenti nella soluzione.
+Il numero dei subtour è esponenziale nel numero di nodi del problema, per questo motivo spesso si ricorre a tecniche "lazy", ovvero si agisce sui subtour solo nel caso siano presenti nella soluzione. La modellazione del VRPTW prevede l'aggiunta di vincoli sulle time windows. Sia:
+- $[a_i, b_i]$ la finestra di tempo nella quale un veicolo deve visitare il $i$
+- $s_{ik}$ l'istante in cui inizia il servizio del veicolo $k$ in $i$
+- $t_{ij}$ il tempo di attraversamento dell'arco $(i,j)$
+- $M$, detta big-M, una costante dal valore tendente a $\infty$.
+Allora i vincoli addizionali sono:
+\begin{align}
+a_i \leq s_{ik} \leq b_i \\
+s_{ik} + t_{ij} - M(1 - x{ijk}) \leq s_{jk}
+\end{align}
+Essi garantiscono il rispetto delle time windows (vincolo $(7)$) e la consecutività dei tempi di arrivo nei nodi (vincolo $(8)$). Tramite ILP è possibile dunque trovare la soluzione ottima del problema VRP e VRPTW, questo però solamente per problemi di piccola dimensione - per problemi più grandi il costo computazionale sarebbe troppo elevato.
+*** Modello esteso
+Un'altra formulazione del problema è possibile tramite la column generation. Si immagini una tabella nella quale ogni riga rappresenta un cliente/nodo, mentre ogni colonna rappresenta un cammino ammissibile.
+|   | 89 | 76 | 99 | 45 | 32 | ... |
+|---+----+----+----+----+----+-----|
+| *1* |  1 |  1 |  1 |  0 |  0 | ... |
+| *2* |  0 |  1 |  1 |  0 |  1 | ... |
+| *3* |  0 |  0 |  0 |  0 |  0 | ... |
+| *4* |  1 |  0 |  1 |  1 |  0 | ... |
+| *5* |  1 |  0 |  0 |  0 |  0 | ... |
+Nell'esempio la prima colonna rappresenta il percorso che attraversa i nodi $1,4,5$ (non necessariamente in questo ordine) ed ha un costo di $89$ unità, la seconda colonna passa per i nodi $1,2$ e costa 76, e così via per tutti i possibili percorsi. Il problema allora diventa trovare i cammini che, attraversando tutti i nodi, minimizzano il costo totale della route. Sia $K$ l'insieme di tutte le colonne (ovvero i possibili path) , $a_{ik}$ = 1 se il percorso definito dalla colonna $k$ serve il cliente $i$ e $c_k$ il costo di quel percorso, allora il problema si descrive in questo modo:
+\begin{align}
+\nonumber min \sum_{k \in K} c_k x_k \\
+\nonumber \textrm{sub. to} \\
+\nonumber \sum_{k \in K} a_{ik} x_k = 1 \textrm{ } \forall i \\
+\nonumber x_k \in {0,1}
+\end{align}
+La formulazione del VRP così espressa diventa un problema di /set partitioning/ ed è di per sè semplice. La difficoltà sta nel fatto che le variabili sono in numero esponenziale e nel trovare i cammini ammissibili per i quali devono essere rispettati i vincoli temporali e di capacità. Nel sottoproblema dunque si richiede di risolvere il problema noto come /elementary shortest path with time windows and capacity constraints/ (ESPPTCC) nel quale si cerca il cammino minimo che tenga conto delle finestre temporali, delle capacità e che sia elementare, ovvero visiti ogni vertice una sola volta.
 ** Tecniche euristiche
+
 * Definizione del problema
 Questo problema è una variante del più noto CVRP (Capacitated Vehicle Routing Problem) con time windows. Il problema si può descrivere nel seguente modo: in un pub si hanno alcuni courtesy bus, ovvero dei veicoli che effettuano un servizio taxi per i suoi clienti. Essi devono appunto riportare a casa i clienti dopo la serata trascorsa al pub a partire dall'orario da loro richiesto. Ogni cliente fornisce un lower bound dell'orario al quale vuole arrivare a casa e la soddisfazione del cliente dipenderà da quanto l'effettiva ora d'arrivo differirà da quella richiesta.
 ** Obiettivi
