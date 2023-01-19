@@ -1,20 +1,57 @@
 #+title: Courtesy Bus Problem
 #+author: Giulia Calanca
 #+date: A.A 2021/2022
+* Il problema in letteratura
+Il problema di vehicle routing (VRP) è un classico problema di ottimizzazione combinatoria e programmazione intera. Introdotto da Dantzig and Ramser (1959) [fn:1] è una generalizzazione del problema del commesso viaggiatore (TSP, Travelling salesman problem). In VRP si richiede di trovare l'insieme ottimo di percorsi che un gruppo di veicoli deve percorrere affinchè tutti i clienti vengano serviti. Esistono numerose varianti del VRP e altrettante implementazioni commerciali di casistiche specifiche. Trovare una soluzione ottima al problema è NP-hard, per questo motivo nelle implementazioni reali, dove dimensione e frequenza di applicazione non permettono di raggiungere l'ottimo, si ricorre all'uso di metaeuristiche. In figura [[fig:vrp]] è rappresentato un esempio di istanza di VRP: il quadrato al centro è il deposito da dove partono e ritornano i veicoli, mentre i cerchi neri sono i clienti da servire.
+#+DOWNLOADED: screenshot @ 2023-01-17 11:09:35
+#+name: fig:vrp
+[[file:Il_problema_in_letteratura/2023-01-17_11-09-35_screenshot.png]]
+Come già menzionato esistono parecchie varianti del problema VRP nelle quali cambiano, o si aggiungono, vincoli di capacità, tempo, punti di partenza, numero di viaggi, etc. La variante del problema implementata in questo progetto può essere considerata come una sotto-variante del CVRPTW (i.e. /Capacitated Vehicle Routing Problem with Time Windows/) nella quale i veicoli hanno una capacità limitata e sono presenti vincoli di tempo per la consegna.
+** Metodi di soluzione esatti
+Per quanto riguarda il VRP classico esistono tre principali approcci alla modellazione del problema [fn:2]
+1) Formulazionni basate sul flusso di veicoli: vengono usate variabili intere associate ad ogni arco per contare il numero di volte che quest'ultimo è attraversato da un veicolo.[fn:3]
+2) Formulazioni basate sul flusso dei beni: vengono aggiunte altre variabili intere associate agli archi per rappresentare il flusso dei beni attraverso i path percorsi dai veicoli[fn:3]
+3) Problema di /set partitioning/: vengono usate un numero esponenziale di variabili binarie associate ad ogni possibile percorso. Il VRP viene dunque formulato come un problema di partizione di insiemi nel quale viene richiesto di trovare il gruppo di percorsi di costo minimo che soddisfino i vincoli del problema.[fn:3]
+Una possibile formulazione dell'approccio 1 in programmazione lineare intera è la seguente:
+\begin{align}
+\nonumber \textrm{min} \sum_{i,j \in V}c_{ij} \sum_{k \in K} x_{ijk} \\
+\nonumber \textrm{sub. to} \\
+\sum_{i \in V} \sum_{k \in K} x_{ijk} = 1 \textrm{ } \forall j \in V \setminus {0} \\
+\sum_{j \in V} \sum_{k \in K} x_{ijk} = 1 \textrm{ } \forall j \in V \setminus {0} \\
+\sum_{i \in V} \sum_{k \in K} x_{ihk} - \sum_{j \in V} \sum_{k \in K} x_{hjk} = 0 \textrm{ } \forall k \in K, h \in V \\
+\sum_{i \in V} q_i \sum_{j \in V} x_{ijk} \leq Q_k \textrm{ } \forall k \in K\\
+\sum_{ijk} x_{ijk} = |S| - 1 \textrm{ } \forall S \subseteq P(V), 0 \notin S \\
+x_{ijk} \in {0,1}
+\end{align}
+Con:
+- $V$ l'insieme dei nodi (clienti e depot), con depot = 0
+- $K$ l'insieme dei bus
+- $c_{ij}$ costo dell'attraversamento dell'arco $(i,j)$
+- $x_{ijk} = 1$ se il bus $k$ attraversa l'arco $(i,j)$, $x_{ijk} = 0$ altrimenti
+- $Q_k$ la capacità del bus $k \in K$
+I vincoli $(1)$ e $(2)$ garantiscono che ci siano rispettivamente un solo veicolo in entrata ed uno solo in uscita per ogni nodo (i.e. cliente). Il vincolo $(3)$ garantisce che il veicolo in entrata coincida con quello in uscita per un determinato nodo, mentre il $(4)$ garantisce sia rispettato il vincolo di capacità dei veicoli. Il vincolo $(5)$ invece riguarda l'eliminazione dei /subtour/, ovvero dei percorsi chiusi che pur rispettando i vincoli da $(1)$ a $(4)$ non generano una soluzione accettabile (esempio in figura [[fig:subtour_1]])
 
+#+DOWNLOADED: screenshot @ 2023-01-19 12:18:32
+#+name: fig:subtour_1
+[[file:Il_problema_in_letteratura/2023-01-19_12-18-32_screenshot.png]]
+Si indica con $S$ il subtour e con $|S|$ il numero dei nodi che lo compongono. Per tutti i subtour nell'insieme dei path $P(V)$ che non contengono il depot (indicato con $0$) il numero di archi deve coincidere con la cardinalità del subtour $|S|$ meno 1. In figura [[fig:subtour_2]] il problema dell'esempio precedente dopo l'eliminazione del subtour.
+#+DOWNLOADED: screenshot @ 2023-01-19 12:30:36
+#+name: fig:subtour_2
+[[file:Il_problema_in_letteratura/2023-01-19_12-30-36_screenshot.png]]
+Il numero dei subtour è esponenziale nel numero di nodi del problema, per questo motivo spesso si ricorre a tecniche "lazy", ovvero si agisce sui subtour solo nel caso siano presenti nella soluzione.
+** Tecniche euristiche
 * Definizione del problema
-Questo problema è una variazione del più noto CVRP (Capacitated Vehicle Routing Problem) con time windows. Il problema si può descrivere nel seguente modo: in un pub si hanno alcuni courtesy bus, ovvero dei veicoli che effettuano un servizio taxi per i suoi clienti. Essi devono appunto riportare a casa i clienti dopo la serata trascorsa al pub a partire dall'orario da loro richiesto. Ogni cliente fornisce un lower bound dell'orario al quale vuole arrivare a casa e la soddisfazione del cliente dipenderà da quanto l'effettiva ora d'arrivo differirà da quella richiesta.
-
-Gli *obiettivi* sono:
+Questo problema è una variante del più noto CVRP (Capacitated Vehicle Routing Problem) con time windows. Il problema si può descrivere nel seguente modo: in un pub si hanno alcuni courtesy bus, ovvero dei veicoli che effettuano un servizio taxi per i suoi clienti. Essi devono appunto riportare a casa i clienti dopo la serata trascorsa al pub a partire dall'orario da loro richiesto. Ogni cliente fornisce un lower bound dell'orario al quale vuole arrivare a casa e la soddisfazione del cliente dipenderà da quanto l'effettiva ora d'arrivo differirà da quella richiesta.
+** Obiettivi
+Gli obiettivi sono:
 - trovare l'insieme di route che minimizzino il costo di percorrenza dei vari courtesy bus
 - massimizzare la soddisfazione dei clienti portandoli a casa il prima possibile considerando l'orario richiesto
-
-I *vincoli* da rispettare sono:
+** Vincoli
+I vincoli da rispettare sono:
 - non eccedere la capacità dei bus
 - portare a casa tutti i clienti
 - rispettare le time windows
 - far partire e ritornare ogni route dal pub
-
 * Formalizzazione del problema
 Sia:
 - $K$ l'insieme dei bus di capacità $Q$
@@ -24,7 +61,6 @@ Sia:
 - $G=(V,A)$ un grafo orientato con $V=\{0\} \cup C$, dove il nodo $\{0\}$ rappresenta il pub e con A insieme degli archi $(i,j)$
 - $t_{i,j}$ il tempo di attraversamento dell'arco $(i,j) \in A$
 - $c_{i,j}$ il costo di attraversamento dell'arco $(i,j) \in A$
-
 * Modello
 ** Variabili
 Oltre alle variabili $t_{i,j}$ e $c_{i,j}$ che rappresentano rispettivamente il tempo ed il costo di attraversamento, definiamo una variabile tridimensionale $x_{i,j,k}$ per capire quali bus percorrono quali archi.
@@ -48,15 +84,12 @@ w_{i,k} =
   0 &  \mbox{ otherwise}
 \end{cases}
 \end{equation}
-
 ** Funzione obiettivo
 Considerando di dover minimizzare anche il tempo che impiego a riportare a casa il cliente la f.o. diventa:
-
 \begin{equation}
 \min \alpha \sum_{k \in K} \sum_{(i,j) \in A} c_{i,j} x_{i,j,k} + \beta \sum_{i \in C} z_i-a_i
 \end{equation}
 Con $\alpha$ e $\beta$ parametri per stabilire a quale delle componenti della f.o. dare più importanza.
-
 ** Vincoli
 1. Non eccedere la capacità dei bus
    \begin{equation}
@@ -113,7 +146,6 @@ Mw_{i,k} = M \cdot w_{i,k} \mbox{; } i \in C \mbox{, } k \in K
 \begin{equation}
 y'_{i,k} = min(Mw_{i,k}\mbox{, } y_{i,k})
 \end{equation}
-
 ** Note
 - $M$, detta big-M, è una costante dal valore tendente a $+\infty$
 - $A$ è una matrice che rappresenta quali archi vengono percorsi da quale bus. È formata da 3 elementi (arco$_i$, arco$_j$, bus). La notazione $A(-,j,k)$ indica gli archi con arco $i$ fisso e $j,k$ non fissi.
@@ -132,7 +164,6 @@ La local search si compone essenzialmente di 1 mossa:
 All'interno della mossa è presente una sub-mossa che ottimizza il tempo di partenza del bus =bus=. Viene calcolato per ogni nodo il tempo minimo di partenza che rispetti le time windows e tra questi viene selezionato il massimo. Un'altra mossa presa in considerazione è stata la =2_Opt=, che prende due archi all'interno di un trip e li scambia. Questa mossa però è risultata meno efficiente della =MoveNode= in quanto crea cambiamenti troppo grandi all'interno dei percorsi, soprattutto in termini di rispetto delle time windows dei clienti.
 ** Local search multi-start
 Come ultimo passaggio di ottimizzazione per questa euristica si è aggiunta la possibilità di utilizzare la LS con un multistart. Il risolutore greedy costruisce ogni volta una soluzione diversa, che viene ottimizzata con la ls finchè non si supera il tempo limite stabilito.
-
 ** Simulated annealing
 Come metaeuristica si è implementata una versione dell'algoritmo di simulated annealing. I parametri utilizzati di default e che in generale hanno dato risultati migliori sono i seguenti:
 + COOLING\under{}RATE = 0.98
@@ -165,7 +196,6 @@ Ma rimane comunque la possibilità di parametrizzare la simulated annealing a pi
   return best_solution
 
 #+end_src
-
 * Struttura del progetto
 A livello di struttura il progetto si compone dei seguenti moduli:
 - =model.py= che definisce la classe =Model=, dove sono contenuti i dati del problema
@@ -176,9 +206,8 @@ A livello di struttura il progetto si compone dei seguenti moduli:
 - =commons.py= che contiene anche help functions utilizzate all'interno dei vari moduli
 
 Il progetto infine contiene un =main= che effettua il parsing dei parametri passati in input e chiama i differenti risolutori.
-
-* Risultati
-
+* Istanze del problema e risultati
+Di seguito viene riportata la tabella che raccoglie i risultati ottenuti tramite le ottimizzazioni implementate nel modello.
 | solver | # nodes | # buses | seconds to solve |   solution |
 |--------+---------+---------+------------------+------------|
 | gurobi |       3 |       2 |               10 |   47.2431* |
@@ -228,3 +257,13 @@ Il progetto infine contiene un =main= che effettua il parsing dei parametri pass
 |--------+---------+---------+------------------+------------|
 
 Nota: le soluzioni indicate dall'asterisco rappresentano soluzioni ottime.
+* Bibliografia
+- Simulated annealing
+- VRPTW letteratura
+- [[https://www.gurobi.com/documentation/9.5/examples/tsp_py.html][Esempio di callback gurobi]]
+* Footnotes
+
+[fn:3] Toth, P.; Vigo, D., eds. (2002). The Vehicle Routing Problem. Monographs on Discrete Mathematics and Applications. Vol._9. Philadelphia: Society for Industrial and Applied Mathematics. ISBN_0-89871-579-2.
+[fn:2] https://en.wikipedia.org/wiki/Vehicle_routing_problem#Exact_solution_methods
+
+[fn:1] G. Dantzig, J. Ramser, The truck dispatching problem, Management Science, 6 (1959), pp. 80-91

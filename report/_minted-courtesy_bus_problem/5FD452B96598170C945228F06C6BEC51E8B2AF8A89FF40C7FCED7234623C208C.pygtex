@@ -1,0 +1,23 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n}{solution} \PYG{o}{=} \PYG{n}{costructive\PYGZus{}solver}\PYG{o}{.}\PYG{n}{solve}\PYG{p}{()}
+
+\PYG{k}{while} \PYG{n}{temperature} \PYG{o}{\PYGZgt{}} \PYG{n}{min\PYGZus{}temperature} \PYG{o}{\PYGZam{}} \PYG{p}{(}\PYG{n}{time} \PYG{o}{\PYGZlt{}} \PYG{n}{end\PYGZus{}time}\PYG{p}{):}
+  \PYG{k}{for} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{n}{n\PYGZus{}of\PYGZus{}iterations}\PYG{p}{:}
+    \PYG{n}{new\PYGZus{}solution} \PYG{o}{=} \PYG{n}{solution}
+
+    \PYG{n}{MoveAndOptTime}\PYG{p}{(}\PYG{n}{new\PYGZus{}solution}\PYG{p}{,} \PYG{n}{random\PYGZus{}src\PYGZus{}node}\PYG{p}{,}
+		   \PYG{n}{random\PYGZus{}dst\PYGZus{}bus}\PYG{p}{,} \PYG{n}{random\PYGZus{}dst\PYGZus{}pos}\PYG{p}{)}\PYG{o}{.}\PYG{n}{apply}\PYG{p}{()}
+
+    \PYG{k}{if} \PYG{n}{new\PYGZus{}solution} \PYG{o+ow}{is} \PYG{n}{feasible} \PYG{n}{do}
+    \PYG{n}{delta} \PYG{o}{=} \PYG{n}{old\PYGZus{}cost} \PYG{o}{\PYGZhy{}} \PYG{n}{new\PYGZus{}cost}
+      \PYG{k}{if} \PYG{n}{random}\PYG{p}{()} \PYG{o}{\PYGZlt{}=} \PYG{n}{exp}\PYG{p}{(}\PYG{n}{delta}\PYG{o}{/}\PYG{n}{temperature}\PYG{p}{)}
+	\PYG{n}{solution} \PYG{o}{=} \PYG{n}{new\PYGZus{}solution}
+
+      \PYG{k}{if} \PYG{n}{new\PYGZus{}cost} \PYG{o}{\PYGZlt{}} \PYG{n}{best\PYGZus{}cost}\PYG{p}{:}
+	\PYG{n}{best\PYGZus{}solution} \PYG{o}{=} \PYG{n}{solution}
+    \PYG{n}{i}\PYG{o}{++}
+  \PYG{n}{temperature} \PYG{o}{=} \PYG{n}{temperature} \PYG{o}{*} \PYG{n}{cooling\PYGZus{}rate}
+
+\PYG{k}{return} \PYG{n}{best\PYGZus{}solution}
+
+\end{Verbatim}
