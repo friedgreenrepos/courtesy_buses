@@ -2,15 +2,15 @@
 #+author: Giulia Calanca
 #+date: A.A 2021/2022
 * Il problema in letteratura
-Il problema di vehicle routing (VRP) è un classico problema di ottimizzazione combinatoria e programmazione intera. Introdotto da Dantzig and Ramser (1959) [fn:1] è una generalizzazione del problema del commesso viaggiatore (TSP, Travelling salesman problem). In VRP si richiede di trovare l'insieme ottimo di percorsi che un gruppo di veicoli deve percorrere affinchè tutti i clienti vengano serviti. Esistono numerose varianti del VRP e altrettante implementazioni commerciali di casistiche specifiche. Trovare una soluzione ottima al problema è NP-hard, per questo motivo nelle implementazioni reali, dove dimensione e frequenza di applicazione non permettono di raggiungere l'ottimo, si ricorre all'uso di metaeuristiche. In figura [[fig:vrp]] è rappresentato un esempio di istanza di VRP: il quadrato al centro è il deposito da dove partono e ritornano i veicoli, mentre i cerchi neri sono i clienti da servire.
-#+DOWNLOADED: screenshot @ 2023-01-17 11:09:35
+Il problema di vehicle routing (VRP) è un classico problema di ottimizzazione combinatoria e programmazione intera. Introdotto da Dantzig and Ramser (1959) [fn:1] è una generalizzazione del problema del commesso viaggiatore (TSP, Travelling salesman problem). In VRP si richiede di trovare l'insieme ottimo di percorsi che un gruppo di veicoli deve percorrere affinchè tutti i clienti vengano serviti. Esistono numerose varianti del VRP e altrettante implementazioni commerciali di casistiche specifiche. Trovare una soluzione ottima al problema è NP-hard, per questo motivo nelle implementazioni reali, dove dimensione e frequenza di applicazione non permettono di raggiungere l'ottimo, si ricorre solitamente all'uso di euristiche. In figura [[fig:vrp]] è rappresentato un esempio di istanza di VRP: il quadrato verde al centro è il deposito da dove partono e ritornano i veicoli, mentre i cerchi neri sono i clienti da servire.
+#+DOWNLOADED: screenshot @ 2023-01-20 19:10:50
 #+name: fig:vrp
-[[file:Il_problema_in_letteratura/2023-01-17_11-09-35_screenshot.png]]
+[[file:Il_problema_in_letteratura/2023-01-20_19-10-50_screenshot.png]]
 Come già menzionato esistono parecchie varianti del problema VRP nelle quali cambiano, o si aggiungono, vincoli di capacità, tempo, punti di partenza, numero di viaggi, etc. La variante del problema implementata in questo progetto può essere considerata come una sotto-variante del CVRPTW (i.e. /Capacitated Vehicle Routing Problem with Time Windows/) nella quale i veicoli hanno una capacità limitata e sono presenti vincoli di tempo per la consegna.
-** Metodi di soluzione esatti
-La principale tecnica impiegata per la risoluzione di VRP è la programmazione lineare intera (ILP). Esistono diverse modellazioni del problema - nelle sezioni successive ne vengono descritte due tra le più conosciute: la modellazione compatta, con un numero di variabili e vincoli polinomiale e la modellazione estesa, ovvero con variabili e vincoli in numero esponenziale.
-*** Modello compatto
-Una possibile formulazione del problema tramite ILP è la seguente:
+** Modellazione del problema
+Esistono diverse modellazioni del problema - nelle sezioni successive ne vengono descritte due tra le più conosciute: la modellazione compatta, con un numero di variabili e vincoli polinomiale e la modellazione estesa, ovvero con variabili e vincoli in numero esponenziale.
+*** Modello CVRP
+Una possibile formulazione del problema CVRP tramite ILP è la seguente:
 \begin{align}
 \nonumber \textrm{min} \sum_{i,j \in V}c_{ij} \sum_{k \in K} x_{ijk} \\
 \nonumber \textrm{sub. to} \\
@@ -28,15 +28,13 @@ Con:
 - $x_{ijk} = 1$ se il bus $k$ attraversa l'arco $(i,j)$, $x_{ijk} = 0$ altrimenti
 - $Q_k$ la capacità del bus $k \in K$
 I vincoli $(1)$ e $(2)$ garantiscono che ci siano rispettivamente un solo veicolo in entrata ed uno solo in uscita per ogni nodo (i.e. cliente). Il vincolo $(3)$ garantisce che il veicolo in entrata coincida con quello in uscita per un determinato nodo, mentre il $(4)$ garantisce sia rispettato il vincolo di capacità dei veicoli. Il vincolo $(5)$ invece riguarda l'eliminazione dei /subtour/, ovvero dei percorsi chiusi che pur rispettando i vincoli da $(1)$ a $(4)$ non generano una soluzione accettabile (esempio in figura [[fig:subtour_1]])
-
-#+DOWNLOADED: screenshot @ 2023-01-19 12:18:32
+#+DOWNLOADED: screenshot @ 2023-01-20 19:16:55
 #+name: fig:subtour_1
-[[file:Il_problema_in_letteratura/2023-01-19_12-18-32_screenshot.png]]
-Si indica con $S$ il subtour e con $|S|$ il numero dei nodi che lo compongono. Per tutti i subtour nell'insieme dei path $P(V)$ che non contengono il depot (indicato con $0$) il numero di archi deve coincidere con la cardinalità del subtour $|S|$ meno 1. In figura [[fig:subtour_2]] il problema dell'esempio precedente dopo l'eliminazione del subtour.
-#+DOWNLOADED: screenshot @ 2023-01-19 12:30:36
-#+name: fig:subtour_2
-[[file:Il_problema_in_letteratura/2023-01-19_12-30-36_screenshot.png]]
-Il numero dei subtour è esponenziale nel numero di nodi del problema, per questo motivo spesso si ricorre a tecniche "lazy", ovvero si agisce sui subtour solo nel caso siano presenti nella soluzione. La modellazione del VRPTW prevede l'aggiunta di vincoli sulle time windows. Sia:
+[[file:Il_problema_in_letteratura/2023-01-20_19-16-55_screenshot.png]]
+
+Si indica con $S$ il subtour e con $|S|$ il numero dei nodi che lo compongono. Per tutti i subtour nell'insieme dei path $P(V)$ che non contengono il depot (indicato con $0$) il numero di archi deve coincidere con la cardinalità del subtour $|S|$ meno 1. Il numero dei subtour è esponenziale nel numero di nodi del problema, per questo motivo spesso si ricorre a tecniche "lazy", ovvero si agisce sui subtour solo nel caso siano presenti nella soluzione.
+*** Modello compatto CVRPTW
+La modellazione del CVRPTW prevede gli stessi vincoli del CVRP con l'aggiunta dei vincoli sulle time windows e la conseguente esclusione di quelli che regolano i subtour. I vincoli temporali di fatto eliminano la formazione di subtour, rendendo dunque quei vincoli non più necessari. Sia:
 - $[a_i, b_i]$ la finestra di tempo nella quale un veicolo deve visitare il $i$
 - $s_{ik}$ l'istante in cui inizia il servizio del veicolo $k$ in $i$
 - $t_{ij}$ il tempo di attraversamento dell'arco $(i,j)$
@@ -46,9 +44,9 @@ Allora i vincoli addizionali sono:
 a_i \leq s_{ik} \leq b_i \\
 s_{ik} + t_{ij} - M(1 - x{ijk}) \leq s_{jk}
 \end{align}
-Essi garantiscono il rispetto delle time windows (vincolo $(7)$) e la consecutività dei tempi di arrivo nei nodi (vincolo $(8)$). Tramite ILP è possibile dunque trovare la soluzione ottima del problema VRP e VRPTW, questo però solamente per problemi di piccola dimensione - per problemi più grandi il costo computazionale sarebbe troppo elevato.
-*** Modello esteso
-Un'altra formulazione del problema è possibile tramite la column generation. Si immagini una tabella nella quale ogni riga rappresenta un cliente/nodo, mentre ogni colonna rappresenta un cammino ammissibile.
+Essi garantiscono il rispetto delle time windows (vincolo $(7)$) e la consecutività dei tempi di arrivo nei nodi (vincolo $(8)$).
+*** Modello esteso CVRPTW
+Un'altra formulazione del problema CVRPTW è possibile tramite la column generation. Si immagini una tabella nella quale ogni riga rappresenta un cliente/nodo, mentre ogni colonna rappresenta un cammino ammissibile.
 |   | 89 | 76 | 99 | 45 | 32 | ... |
 |---+----+----+----+----+----+-----|
 | *1* |  1 |  1 |  1 |  0 |  0 | ... |
@@ -64,8 +62,8 @@ Nell'esempio la prima colonna rappresenta il percorso che attraversa i nodi $1,4
 \nonumber x_k \in {0,1}
 \end{align}
 La formulazione del VRP così espressa diventa un problema di /set partitioning/ ed è di per sè semplice. La difficoltà sta nel fatto che le variabili sono in numero esponenziale e nel trovare i cammini ammissibili per i quali devono essere rispettati i vincoli temporali e di capacità. Nel sottoproblema dunque si richiede di risolvere il problema noto come /elementary shortest path with time windows and capacity constraints/ (ESPPTCC) nel quale si cerca il cammino minimo che tenga conto delle finestre temporali, delle capacità e che sia elementare, ovvero visiti ogni vertice una sola volta.
-** Tecniche euristiche
-
+** Metodi di risoluzione
+I metodi per risolvere il VRPTW in maniera esatta possono essere classificati in tre categorie: basati sul rilassamento lagrangiano, column generation e dynamic programming. Come già anticipato trovare una soluzione per il VRPTW è NP-hard, dunque la dimensione dei problemi risolvibili in modo ottimo è molto limitata. Per questo motivo la ricerca sul tema si è dedicata principalmente allo studio di metaeuristiche come algoritmi genetici, tabu search, simulated annealing, ALNS, etc.
 * Definizione del problema
 Questo problema è una variante del più noto CVRP (Capacitated Vehicle Routing Problem) con time windows. Il problema si può descrivere nel seguente modo: in un pub si hanno alcuni courtesy bus, ovvero dei veicoli che effettuano un servizio taxi per i suoi clienti. Essi devono appunto riportare a casa i clienti dopo la serata trascorsa al pub a partire dall'orario da loro richiesto. Ogni cliente fornisce un lower bound dell'orario al quale vuole arrivare a casa e la soddisfazione del cliente dipenderà da quanto l'effettiva ora d'arrivo differirà da quella richiesta.
 ** Obiettivi
