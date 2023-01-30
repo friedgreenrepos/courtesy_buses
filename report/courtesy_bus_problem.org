@@ -2,13 +2,13 @@
 #+author: Giulia Calanca
 #+date: A.A 2021/2022
 * Il problema in letteratura
-Il problema di vehicle routing (VRP) è un classico problema di ottimizzazione combinatoria e programmazione intera. Introdotto da Dantzig and Ramser (1959) [fn:1] è una generalizzazione del problema del commesso viaggiatore (TSP, Travelling salesman problem). In VRP si richiede di trovare l'insieme ottimo di percorsi che un gruppo di veicoli deve percorrere affinchè tutti i clienti vengano serviti. Esistono numerose varianti del VRP e altrettante implementazioni commerciali di casistiche specifiche. Trovare una soluzione ottima al problema è NP-hard, per questo motivo nelle implementazioni reali, dove dimensione e frequenza di applicazione non permettono di raggiungere l'ottimo, si ricorre solitamente all'uso di euristiche. In figura [[fig:vrp]] è rappresentato un esempio di istanza di VRP: il quadrato verde al centro è il deposito da dove partono e ritornano i veicoli, mentre i cerchi neri sono i clienti da servire.
+Il problema di vehicle routing (VRP) è un classico problema di ottimizzazione combinatoria e programmazione intera. Introdotto da Dantzig and Ramser (1959) [fn:1] può essere visto come una generalizzazione del problema del commesso viaggiatore (TSP, Travelling salesman problem). In VRP si richiede di trovare l'insieme ottimo di percorsi che un gruppo di veicoli deve percorrere affinché tutti i clienti vengano serviti. Esistono numerose varianti del VRP e altrettante implementazioni commerciali di casistiche specifiche. Trovare una soluzione ottima al problema è NP-hard; per questo motivo nelle implementazioni reali, dove dimensione e frequenza di applicazione non permettono di raggiungere l'ottimo, si ricorre solitamente all'uso di euristiche. In figura [[fig:vrp]] è rappresentato un esempio di istanza di VRP: il quadrato verde al centro è il deposito da dove partono e ritornano i veicoli, mentre i cerchi neri sono i clienti da servire.
 #+DOWNLOADED: screenshot @ 2023-01-20 19:10:50
 #+name: fig:vrp
 [[file:Il_problema_in_letteratura/2023-01-20_19-10-50_screenshot.png]]
 Come già menzionato esistono parecchie varianti del problema VRP nelle quali cambiano, o si aggiungono, vincoli di capacità, tempo, punti di partenza, numero di viaggi, etc. La variante del problema implementata in questo progetto può essere considerata come una sotto-variante del CVRPTW (i.e. /Capacitated Vehicle Routing Problem with Time Windows/) nella quale i veicoli hanno una capacità limitata e sono presenti vincoli di tempo per la consegna.
 ** Modellazione del problema
-Esistono diverse modellazioni del problema - nelle sezioni successive ne vengono descritte due tra le più conosciute: la modellazione compatta, con un numero di variabili e vincoli polinomiale e la modellazione estesa, ovvero con variabili e vincoli in numero esponenziale.
+Esistono alcune modellazioni del problema - nelle sezioni successive ne vengono descritte due tra le più conosciute: la modellazione compatta, con un numero di variabili e vincoli polinomiale e la modellazione estesa, ovvero con variabili e vincoli in numero esponenziale.
 *** Modello CVRP
 Una possibile formulazione del problema CVRP tramite ILP è la seguente:
 \begin{align}
@@ -63,9 +63,13 @@ Nell'esempio la prima colonna rappresenta il percorso che attraversa i nodi $1,4
 \end{align}
 La formulazione del VRP così espressa diventa un problema di /set partitioning/ ed è di per sè semplice. La difficoltà sta nel fatto che le variabili sono in numero esponenziale e nel trovare i cammini ammissibili per i quali devono essere rispettati i vincoli temporali e di capacità. Nel sottoproblema dunque si richiede di risolvere il problema noto come /elementary shortest path with time windows and capacity constraints/ (ESPPTCC) nel quale si cerca il cammino minimo che tenga conto delle finestre temporali, delle capacità e che sia elementare, ovvero visiti ogni vertice una sola volta.
 ** Metodi di risoluzione
-I metodi per risolvere il VRPTW in maniera esatta possono essere classificati in tre categorie: basati sul rilassamento lagrangiano, column generation e dynamic programming. Come già anticipato trovare una soluzione per il VRPTW è NP-hard, dunque la dimensione dei problemi risolvibili in modo ottimo è molto limitata. Per questo motivo la ricerca sul tema si è dedicata principalmente allo studio di metaeuristiche come algoritmi genetici, tabu search, simulated annealing, ALNS, etc.
-* Definizione del problema
-Questo problema è una variante del più noto CVRP (Capacitated Vehicle Routing Problem) con time windows. Il problema si può descrivere nel seguente modo: in un pub si hanno alcuni courtesy bus, ovvero dei veicoli che effettuano un servizio taxi per i suoi clienti. Essi devono appunto riportare a casa i clienti dopo la serata trascorsa al pub a partire dall'orario da loro richiesto. Ogni cliente fornisce un lower bound dell'orario al quale vuole arrivare a casa e la soddisfazione del cliente dipenderà da quanto l'effettiva ora d'arrivo differirà da quella richiesta.
+I metodi per risolvere il VRPTW in maniera esatta possono essere classificati in tre categorie: basati sul rilassamento lagrangiano, column generation e dynamic programming. Come già anticipato trovare una soluzione per il VRPTW è NP-hard, dunque la dimensione dei problemi risolvibili in modo ottimo è molto limitata. A causa della sua elevata difficioltà computazionale in tanti si sono dedicati allo studio di euristiche il cui scopo è trovare una soluzione approssimata al VRPTW. Un primo approccio possibile è quello di utilizzare un algoritmo costruttivo per generare una soluzione accettabile: ad ogni iterazione un nodo (cliente) non visitato viene aggiunto al cammino. La costruzione della route può essere fatta in maniera sequenziale, un nodo alla volta, o parallela, un nodo alla volta per ogni route. L'inserzione sequenziale fu proposta da Solomon [fn:4], il quale pensò ad un algoritmo strutturato in due fasi,  una dove la scelta del cliente ricarda sul nodo più vicino e l'altra dove si seleziona un cliente sulla base del concetto di /maximum savings/ teorizzato da Clark e Wright[fn:5]. Esistono inoltre degli algoritmi di miglioramento dei cammini che iterativamente modificano la soluzione corrente sfruttando tecniche di /local search/. Queste tecniche si basano sull'utilizzo /neightbourhood/, un insieme di soluzioni raggiungibili a partire da quella attuale tramite l'utilizzo di "mosse". Si definisce mossa ogni tipo di spostamento di nodi o archi applicabile in un'iterazione. Esempi di mosse sono: 2-opt, 3-opt o OR-opt nelle quali si scambiano rispettivamente 2, 3 o più archi, l'inserzione, ovvero lo spostamento di un nodo da una posizione all'altra e la swap, mossa nella quale due nodi vengono scambiati di posto. Si veda in figura [[fig:2-opt]] l'esempio dell'applicazione della mossa 2-opt nella quale gli archi $(i,i+1)$ e $(j,j+1)$ vengono scambiati.
+#+DOWNLOADED: screenshot @ 2023-01-23 16:31:11
+#+name: fig:2-opt
+[[file:Il_problema_in_letteratura/2023-01-23_16-31-11_screenshot.png]]
+L'obiettivo della local search è quello di arrivare ad un ottimo: tentando una mossa dopo l'altra si arriva ad una soluzione non più migliorabile, dunque si arresta l'algoritmo. Il principale limite della local search sta nel fatto che spesso si arresta la ricerca in un ottimo locale - un modo semplice per ovviare al problema a è quello di ricorrere al /multistart/, ovvero eseguire la local search più volte a partire da soluzioni iniziali differenti. Oltre al multistart esistono numerose tecniche di risoluzione approssimata che cercano di ampliare lo spazio di ricerca della soluzione - esse vengono chiamate /metaeuristiche/. Una delle prima metaeuristiche fu introdotta da Glover [fn:6] con il nome di /tabu search/. In questo algoritmo ad ogni iterazione viene esplorata la /neighbourhood/ della soluzione e la miglior soluzione trovata viene selezionata come soluzione corrente. Per fare in modo che l'algoritmo si possa allontanare da un ottimo locale, la soluzione corrente viene aggiornata con la miglior soluzione trovata nella /neighbourhood/ anche se non è effettivamente migliore di quella attuale. Per evitare cicli viene proibita la visita di soluzioni recenti - questo concetto è implementato tramite /tabu list/, ovvero una lista contenente mosse "proibite". Esistono dei criteri per andare contro le regole della tabu list, detti /aspiration criteria/, che permettono di fermare la tabu search dopo, ad esempio, un numero di iterazioni senza miglioramento. Tra le altre metaeuristiche più conosciute si elencano ancora: algoritmi genetici, simulated annealing, ALNS (Adaptive Large Neighbourhood Search).
+* Il Courtesy Bus Problem
+Come già menzionato questo problema è una variante del più noto CVRPTW (/Capacitated Vehicle Routing Problem with Time Windows/). Il problema si può descrivere nel seguente modo: in un pub si hanno alcuni courtesy bus, ovvero dei veicoli che effettuano un servizio taxi per i suoi clienti. Essi devono appunto riportare a casa i clienti dopo la serata trascorsa al pub a partire dall'orario da loro richiesto. Ogni cliente fornisce un lower bound dell'orario al quale vuole arrivare a casa e la soddisfazione del cliente dipenderà da quanto l'effettiva ora d'arrivo differirà da quella richiesta.
 ** Obiettivi
 Gli obiettivi sono:
 - trovare l'insieme di route che minimizzino il costo di percorrenza dei vari courtesy bus
@@ -85,7 +89,7 @@ Sia:
 - $G=(V,A)$ un grafo orientato con $V=\{0\} \cup C$, dove il nodo $\{0\}$ rappresenta il pub e con A insieme degli archi $(i,j)$
 - $t_{i,j}$ il tempo di attraversamento dell'arco $(i,j) \in A$
 - $c_{i,j}$ il costo di attraversamento dell'arco $(i,j) \in A$
-* Modello
+* Modello Courtesy Bus Problem
 ** Variabili
 Oltre alle variabili $t_{i,j}$ e $c_{i,j}$ che rappresentano rispettivamente il tempo ed il costo di attraversamento, definiamo una variabile tridimensionale $x_{i,j,k}$ per capire quali bus percorrono quali archi.
 \begin{equation}
@@ -179,23 +183,15 @@ Per generare una prima semplice soluzione accettabile sono stati testati tre dif
 1. Il primo algoritmo riempie un bus alla volta aggiungendo ad ogni passo il cliente più vicino
 2. Il secondo algoritmo scorre invece la lista dei bus e aggiunge un cliente alla volta scegliendo quello più vicino
 3. L'ultimo algoritmo abbina in modo casuale ogni cliente ad un bus che abbia sufficiente capacità.
-
-Tutti e tre gli algoritmi generano soluzioni simili in termini di costo, ma l'ultimo algoritmo genera una soluzione che risulta più adatta (con più possibilità di miglioramento) come soluzione iniziale da dare in input alla local
+Tutti e tre gli algoritmi generano soluzioni simili in termini di costo, ma l'ultimo algoritmo genera una soluzione che risulta più adatta (con più possibilità di miglioramento) come soluzione iniziale da dare in input alla local search.
 ** Local search
-La local search si compone essenzialmente di 1 mossa:
+La local search consiste nell'esplorazione di una neighbourhood generata essenzialmente a partire una mossa:
 - =MoveAndOptTime(node,bus,pos)=, una versione della /insert/ che sposta il nodo =node= nella lista di clienti del bus =bus= nella posizione =pos=. =bus= può essere lo stesso di partenza o un altro.
-
-All'interno della mossa è presente una sub-mossa che ottimizza il tempo di partenza del bus =bus=. Viene calcolato per ogni nodo il tempo minimo di partenza che rispetti le time windows e tra questi viene selezionato il massimo. Un'altra mossa presa in considerazione è stata la =2_Opt=, che prende due archi all'interno di un trip e li scambia. Questa mossa però è risultata meno efficiente della =MoveNode= in quanto crea cambiamenti troppo grandi all'interno dei percorsi, soprattutto in termini di rispetto delle time windows dei clienti.
+All'interno della mossa è presente una sotto-mossa che ottimizza il tempo di partenza di =bus=. Viene calcolato per ogni nodo il tempo minimo di partenza che rispetti le time-windows e tra questi viene selezionato il massimo. Un'altra mossa presa in considerazione è stata la =2-opt=, che prende due archi all'interno di un trip e li scambia. Questa mossa però è risultata meno efficiente della =MoveNode= in quanto crea cambiamenti troppo grandi all'interno dei percorsi, soprattutto in termini di rispetto delle time windows dei clienti.
 ** Local search multi-start
-Come ultimo passaggio di ottimizzazione per questa euristica si è aggiunta la possibilità di utilizzare la LS con un multistart. Il risolutore greedy costruisce ogni volta una soluzione diversa, che viene ottimizzata con la ls finchè non si supera il tempo limite stabilito.
+Come prima metaeuristica si è implementata la possibilità di utilizzare la local search con un multistart. Il risolutore greedy costruisce ogni volta una soluzione diversa, che viene ottimizzata tramite local search finchè non si supera il tempo limite stabilito.
 ** Simulated annealing
-Come metaeuristica si è implementata una versione dell'algoritmo di simulated annealing. I parametri utilizzati di default e che in generale hanno dato risultati migliori sono i seguenti:
-+ COOLING\under{}RATE = 0.98
-+ INITIAL\under{}TEMPERATURE = 10
-+ MINIMUM\under{}TEMPERATURE = 1
-+ ITERATIONS\under{}PER\under{}TEMPERATURE = 10000
-
-Ma rimane comunque la possibilità di parametrizzare la simulated annealing a piacimento in base al dataset del problema. L'algoritmo è strutturato nel seguente modo:
+Un'altra metaeuristica implementata è una versione dell'algoritmo di /simulated annealing/. Il nome deriva da un processo utilizzato in ambito metallurgico, chiamato appunto "annealing" (letteralmente ricottura), usato per determinare lo stato di minima energia di un metallo: il materiale viene scaldato e portato in uno stato nel quale gli atomi sono più liberi di muoversi, per poi essere raffreddato e tornare nuovamente allo stato solido. L'idea è quella di accettare, oltre a soluzioni all'interno della neighbourhood che migliorano la soluzione corrente, anche, con una certa probabilità, soluzioni peggiori. Questa probabilità è determinata da un valore decrescente di "temperatura" che permette di rendere più selettiva la scelta delle soluzioni man mano che si va avanti nella ricerca dell'ottimo. L'algoritmo in questo caso è strutturato nel seguente modo:
 
 #+begin_src python
   solution = costructive_solver.solve()
@@ -220,74 +216,120 @@ Ma rimane comunque la possibilità di parametrizzare la simulated annealing a pi
   return best_solution
 
 #+end_src
+I parametri da specificare sono:
+- *cooling rate*, ovvero il tasso di raffreddamento, che serve a regolare la velocità con la quale scende la temperatura. Ha un valore massimo  di 1 ( la temperatura rimane costante) e minimo di 0 (la temperatura cala subito al minimo)
+- *initial* e *minimum temperature*, ovvero la temperatura di partenza e quella minima alla quale arrestare l'ottimizzazione
+- *iterations per temperature*, il numero di iterazioni nelle quali è permesso applicare una mossa nella neighbourhood
+I valori dei paramentri utilizzati di default e che in generale hanno dato risultati migliori sono i seguenti:
++ COOLING\under{}RATE = 0.98
++ INITIAL\under{}TEMPERATURE = 10
++ MINIMUM\under{}TEMPERATURE = 1
++ ITERATIONS\under{}PER\under{}TEMPERATURE = 10000
+Ma rimane comunque la possibilità di parametrizzare la simulated annealing a piacimento in base al dataset del problema.
 * Struttura del progetto
-A livello di struttura il progetto si compone dei seguenti moduli:
-- =model.py= che definisce la classe =Model=, dove sono contenuti i dati del problema
-- =solution.py= che definisce la classe =Solution=, dove è contenuta la soluzione
-- =validator.py= che definisce la classe =Validator=, la quale valida una soluzione in base modello corrispondente e calcola anche i costi sia delle route sia in termini di soddisfazione dei clienti
-- =gurobysolver.py= che definisce il risulutore ottimo creato con Gurobi
-- =heuristics.py= che contiene le varie classi che implementano le euristiche
-- =commons.py= che contiene anche help functions utilizzate all'interno dei vari moduli
-
-Il progetto infine contiene un =main= che effettua il parsing dei parametri passati in input e chiama i differenti risolutori.
+A livello di struttura il progetto si compone di alcuni moduli.
+** Model
+In =model.py= è definita la classe =Model=, che rappresenta l'istanza del problema. Gli attributi della classe sono:
+- =N= il numero di bus
+- =Q= la capacità del bus
+- =customers= la lista dei clienti rappresentati da un numero >= 1
+- =alpha= il peso del costo delle route nella f.o. (di default = 1)
+- =beta= il peso della /customer satisfaction/ nella f.o. (di default = 1)
+- =omega= il parametro distanza/tempo di percorrenza di una route (di default = 1)
+I metodi di =Model= sono:
+- =parse(filname)= che legge un'istanza del problema da file
+- =distance(v1, v2)= calcola la distanza euclidea tra due nodi/clienti
+- =time(v1, v2)= calcola la distanza in termini di tempo tra due nodi/clienti
+- =buses()= genera la lista di =N= bus
+- =des_arrived_times()= ritorna il tempo di arrivo richiesto dai clienti
+- =customer_arr_time(v)= ritorna il tempo di arrivo richiesto dal cliente =v=
+** Solution
+In =solution.py= è definita la classe =Solution= che rappresenta una soluzione dell'istanza del problema. Gli attributi della classe sono:
+- =model=, il modello dell'istanza del problema
+- =trips= una lista di liste contenente i cammini facenti parte della soluzione
+Come metodi la classe =Solution= include:
+- =save(filename)= salva la soluzione su file
+- =descrition= esprime la soluzione in formato leggibile
+** Validator
+Il modulo =validator.py= contiene la definizione della classe =Validator= la quale valida una soluzione in base modello corrispondente e calcola i costi sia in termini di distanza percorsa, sia in termini di soddisfazione dei clienti. Ha due attributi =model= e =solution= che rispettivamente l'istanza del problema e la soluzione che si sta validando. I metodi =check_H1, check_H2, check_H4, check_H5, check_H6= effettuano un controllo sui vincoli come definiti in [[Vincoli]]. Il metodo =customer_satisfaction()= calcola la soddisfazione del cliente (minore è il valore, maggiore è la soddisfazione) mentre =trips_cost()= calcola il costo dei percorsi contenuti nella soluzione. La funzione =validate()= restituisce un oggetto =ValidationResult= contenente il risultato della validazione, ovvero se è /feasible/ o se infrange qualche vincolo.
+** GurobiSolver
+In questo modulo viene definita la classe =GurobiSolver= nella quale viene descritto il modello tramite Gurobi e viene implementato il metodo =solve()= che genera - quando possibile - la soluzione ottima. All'interno del metodo =solve()= avviene la gestione dei subtour (problema descritto in [[Modello CVRP]]): anzichè aggiungere un numero esponenziale di vincoli per la loro eliminazione, viene implementato - in maniera /lazy/ - una serie di /callback/ chiamate solamente nel caso in cui siano presenti dei subtour nella soluzione. In questo modo si riescono ad imporre dei vincoli in modo dinamico, senza andare ad impattare il resto del modello Gurobi.
+** Heuristics
+In questo modulo sono raccolte le euristiche e metaeuristiche, ovvero:
+- =GreedySolver= il risolutore costruttivo greedy che assegna un cliente random ad un bus random
+- =MoveOptTime= la classe che definisce la mossa di inserimento utilizzata per generare le diverse neighbourhood
+- =LocalSearch= la classe che implementa l'euristica di local search e utilizza la mossa del punto precedente
+- =SimulatedAnnealing= che implementa la tecnica di simulated annealing sempre utilizzando la mossa =MoveOptTime= per generare le sue neighbourhood
 * Istanze del problema e risultati
-Di seguito viene riportata la tabella che raccoglie i risultati ottenuti tramite le ottimizzazioni implementate nel modello.
-| solver | # nodes | # buses | seconds to solve |   solution |
-|--------+---------+---------+------------------+------------|
-| gurobi |       3 |       2 |               10 |   47.2431* |
-| ls     |       3 |       2 |               10 |    47.2431 |
-| ls-ms  |       3 |       2 |               10 |    47.2431 |
-| sa     |       3 |       2 |               10 |    47.2431 |
-|--------+---------+---------+------------------+------------|
-| gurobi |       4 |       2 |               10 |   56.2986* |
-| ls     |       4 |       2 |               10 |    63.2672 |
-| ls-ms  |       4 |       2 |               10 |    56.2986 |
-| sa     |       4 |       2 |               10 |    56.2986 |
-|--------+---------+---------+------------------+------------|
-| gurobi |       7 |       3 |               10 |  116.6939* |
-| ls     |       7 |       3 |               10 |   118.4272 |
-| ls-ms  |       7 |       3 |               10 |   116.6939 |
-| sa     |       7 |       3 |               10 |   116.6939 |
-|--------+---------+---------+------------------+------------|
-| gurobi |       9 |       3 |               10 |  202.4896* |
-| ls     |       9 |       3 |               10 |   261.5168 |
-| ls-ms  |       9 |       3 |               10 |   202.4896 |
-| sa     |       9 |       3 |               10 |   202.4896 |
-|--------+---------+---------+------------------+------------|
-| gurobi |      11 |      10 |              100 |  213.2659* |
-| ls     |      11 |      10 |              100 |   227.3628 |
-| ls-ms  |      11 |      10 |              100 |   227.3628 |
-| sa     |      11 |      10 |              100 |   227.3628 |
-|--------+---------+---------+------------------+------------|
-| gurobi |      20 |       5 |              100 |  3238.1498 |
-| ls     |      20 |       5 |              100 |  3379.7927 |
-| ls-ms  |      20 |       5 |              100 |  2998.8899 |
-| sa     |      20 |       5 |              100 |  2998.8899 |
-|--------+---------+---------+------------------+------------|
-| gurobi |      41 |       8 |              200 |  772.44067 |
-| ls     |      41 |       8 |              200 |   715.7607 |
-| ls-ms  |      41 |       8 |              200 |   660.1733 |
-| sa     |      41 |       8 |              200 |   588.4076 |
-|--------+---------+---------+------------------+------------|
-| gurobi |      52 |      11 |              200 |  4610.3419 |
-| ls     |      52 |      11 |              200 |  3131.1859 |
-| ls-ms  |      52 |      11 |              200 |  2984.3199 |
-| sa     |      52 |      11 |              200 |  2889.8812 |
-|--------+---------+---------+------------------+------------|
-| gurobi |     200 |      13 |              200 |          - |
-| ls     |     200 |      13 |              200 | 59069.6611 |
-| ls-ms  |     200 |      13 |              200 | 57914.4437 |
-| sa     |     200 |      13 |              200 |  4914.3869 |
-|--------+---------+---------+------------------+------------|
-
-Nota: le soluzioni indicate dall'asterisco rappresentano soluzioni ottime.
+In tabella [[tab:results]] vengono riportati raccoglie i risultati ottenuti tramite i risolutori implementati all'interno del progetto. Le istanze del problema (presenti nella cartella =datasets=) sono state generate casualmente, aumentando man mano il numero di clienti e bus (fino ad arrivare a problemi non più risolvibili all'ottimo) e variando anche la sparsità dei nodi. Per ogni istanza viene descritto il numero di nodi (/# nodes/), ovvero clienti, da servire, il numero di bus (/# buses/), i secondi lasciati all'esecuzione del risolutore (/seconds to solve/) ed il valore della soluzione (solution value).
+#+CAPTION: Tabella dei risultati -soluzioni indicate dall'asterisco rappresentano soluzioni ottime
+#+NAME: tab:results
+| *solver* | *# nodes* | *# buses* | *seconds to solve* | *solution value* |
+|--------+---------+---------+------------------+----------------|
+| gurobi |       3 |       2 |               10 |       47.2431* |
+| ls     |       3 |       2 |               10 |        47.2431 |
+| ls-ms  |       3 |       2 |               10 |        47.2431 |
+| sa     |       3 |       2 |               10 |        47.2431 |
+|--------+---------+---------+------------------+----------------|
+| gurobi |       4 |       2 |               10 |       56.2986* |
+| ls     |       4 |       2 |               10 |        63.2672 |
+| ls-ms  |       4 |       2 |               10 |        56.2986 |
+| sa     |       4 |       2 |               10 |        56.2986 |
+|--------+---------+---------+------------------+----------------|
+| gurobi |       7 |       3 |               10 |      116.6939* |
+| ls     |       7 |       3 |               10 |       118.4272 |
+| ls-ms  |       7 |       3 |               10 |       116.6939 |
+| sa     |       7 |       3 |               10 |       116.6939 |
+|--------+---------+---------+------------------+----------------|
+| gurobi |      10 |       3 |               10 |      202.4896* |
+| ls     |      10 |       3 |               10 |       261.5168 |
+| ls-ms  |      10 |       3 |               10 |       202.4896 |
+| sa     |      10 |       3 |               10 |       202.4896 |
+|--------+---------+---------+------------------+----------------|
+| gurobi |      11 |      10 |              100 |      213.2659* |
+| ls     |      11 |      10 |              100 |       223.1647 |
+| ls-ms  |      11 |      10 |              100 |       213.2659 |
+| sa     |      11 |      10 |              100 |       213.2659 |
+|--------+---------+---------+------------------+----------------|
+| gurobi |      20 |       5 |              100 |      3238.1498 |
+| ls     |      20 |       5 |              100 |      3379.7927 |
+| ls-ms  |      20 |       5 |              100 |      2998.8899 |
+| sa     |      20 |       5 |              100 |      2998.8899 |
+|--------+---------+---------+------------------+----------------|
+| gurobi |      42 |       8 |              200 |      772.44067 |
+| ls     |      42 |       8 |              200 |       715.7607 |
+| ls-ms  |      42 |       8 |              200 |       660.1733 |
+| sa     |      42 |       8 |              200 |       588.4076 |
+|--------+---------+---------+------------------+----------------|
+| gurobi |      52 |      11 |              200 |      4610.3419 |
+| ls     |      52 |      11 |              200 |      3131.1859 |
+| ls-ms  |      52 |      11 |              200 |      2984.3199 |
+| sa     |      52 |      11 |              200 |      2889.8812 |
+|--------+---------+---------+------------------+----------------|
+| gurobi |     201 |      13 |              200 |              - |
+| ls     |     201 |      13 |              200 |     59069.6611 |
+| ls-ms  |     201 |      13 |              200 |     57914.4437 |
+| sa     |     201 |      13 |              200 |      4914.3869 |
+|--------+---------+---------+------------------+----------------|
+Come si può notare dalla tabella (dati evidenziati con un asterisco), si riescono ad ottenere soluzioni ottime con Gurobi fino ad numero di clienti contenuto (5° blocco/riga) e altrettanto buone con local search multistart e simulated annealing. Passando al 6° blocco/riga notiamo invece che gurobi non riesce più ad arrivare all'ottimo e anche local search multi-start non si avvicina quanto simulated annealing. Nell'instanza del problma con 201 clienti si rende palese come simulated annealing performi in maniera decisamente migliore a parità di tempo di local search con multistart.
 * Bibliografia
-- Simulated annealing
-- VRPTW letteratura
+- Cordeau, J.F., Desaulniers, G., Desrosiers J., Solomon, M.M., Soumis, F., 1999, The VRP with Time Windows, Les Cahiers du GERAD, G–99–13
+- El-Sherbeny, Nasser A., 2010, Vehicle routing with time windows: An overview of exact, heuristic and metaheuristic methods, Journal of King Saud University (Science)
+- N.R. Achuthan, L. Caccetta, Integer linear programming formulation for a vehicle routing problem, European Journal of Operational Research, 52 (1991), pp. 86-89
+- G. Laporte, The vehicle routing problem: An overview of exact and approximate algorithms, European Journal of Operational Research, 59 (1992), pp. 231-247
+- [[https://how-to.aimms.com/Articles/332/332-Formulation-CVRP.html][Capacitated Vehicle Routing Problem formulation]]
+- [[https://how-to.aimms.com/Articles/332/332-Implicit-Dantzig-Fulkerson-Johnson.html][Implicit Dantzig-Fulkerson-Johnson formulation]]
+- [[https://how-to.aimms.com/Articles/332/332-Explicit-Dantzig-Fulkerson-Johnson-formulation.html][Explicit Dantzig-Fulkerson-Johnson formulation]]
 - [[https://www.gurobi.com/documentation/9.5/examples/tsp_py.html][Esempio di callback gurobi]]
 * Footnotes
+[fn:6]Glover, F., 1989. Tabu search. Part 1, ORSA. Journal on Computing 1 (3), 190–206.
+
+[fn:5]G. Clarke and J.W. Wright. Scheduling of vehicles from a central depot to a number of delivery points. Operations Research, 12:568–581, 1964.
+[fn:4]M.M. Solomon. Algorithms for the vehicle routing and scheduling problem with time window constraints. Operations Research, 35:254–265, 1987.
 
 [fn:3] Toth, P.; Vigo, D., eds. (2002). The Vehicle Routing Problem. Monographs on Discrete Mathematics and Applications. Vol._9. Philadelphia: Society for Industrial and Applied Mathematics. ISBN_0-89871-579-2.
 [fn:2] https://en.wikipedia.org/wiki/Vehicle_routing_problem#Exact_solution_methods
 
 [fn:1] G. Dantzig, J. Ramser, The truck dispatching problem, Management Science, 6 (1959), pp. 80-91
+
+#  LocalWords:  subtour depot
