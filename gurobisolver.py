@@ -31,9 +31,6 @@ class GurobiSolver:
         # edges
         A = [(i, j, k) for i in V for j in V for k in K if i != j]
 
-        # create edges manually
-        # A = [(0,3,0),(3,1,0),(1,2,0),(2,0,0)]
-
         t = [[0] * len(V) for _ in V]
         c = [[0] * len(V) for _ in V]
 
