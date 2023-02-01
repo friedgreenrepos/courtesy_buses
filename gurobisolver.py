@@ -61,12 +61,15 @@ class GurobiSolver:
         X = m.addVars(A, vtype=gurobipy.GRB.BINARY, name="x")
 
         # Y_ik: bus k transit time at vertex i
-        Y = m.addVars([(i, k) for i in V for k in K], vtype=gurobipy.GRB.CONTINUOUS, name="y")
+        Y = m.addVars([(i, k) for i in V for k in K],
+                      vtype=gurobipy.GRB.CONTINUOUS, name="y")
 
         # Y_ik: bus k transit time at vertex i if vertex is really visited by k, otherwise 0
-        YY = m.addVars([(i, k) for i in C for k in K], vtype=gurobipy.GRB.CONTINUOUS, name="yy")
+        YY = m.addVars([(i, k) for i in C for k in K],
+                       vtype=gurobipy.GRB.CONTINUOUS, name="yy")
 
-        # Z_i: customer arrival time (== vertex transit time for the bus that brings the customer home)
+        # Z_i: customer arrival time
+        # is equal to vertex service time for the bus that take the customer home
         Z = m.addVars(C, vtype=gurobipy.GRB.CONTINUOUS, name="z")
 
         # W_ik: 1 if customer is carried by bus k
@@ -180,7 +183,6 @@ class GurobiSolver:
                         if not trip or trip[-1][1] == p[0] and trip[-1][2] == p[2]:
                             # either this is the first passage of a new trip
                             # or the passage p is linked to the last passage
-                            print(p)
                             trip.append(p)
                             passages.remove(p)
                             break
@@ -193,17 +195,19 @@ class GurobiSolver:
 
                 bad_trips = []
 
-                # the bad subtours are the one that do not pass through the PUB
+                # the bad subtours are the ones that do not pass through the PUB
                 for trip in trips:
                     for p in trip:
                         if p[0] == PUB:
                             break
                     else:
-                        # PUB has never been found through the passages of the trips
+                        # PUB was not found among the passages of the trip
                         bad_trips.append(trip)
 
-                # vprint(f"Trips: {json.dumps(trips, indent=4)}")
-                vprint(f"Bad Trips: {json.dumps(bad_trips, indent=4)}")
+                if bad_trips:
+                    vprint(f"Bad Trips: {json.dumps(bad_trips, indent=4)}")
+                else:
+                    vprint("No bad trips detected.")
 
                 return bad_trips
 
