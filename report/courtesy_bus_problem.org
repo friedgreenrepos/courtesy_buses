@@ -8,7 +8,7 @@ Il problema di vehicle routing (VRP) è un classico problema di ottimizzazione c
 [[file:Il_problema_in_letteratura/2023-01-20_19-10-50_screenshot.png]]
 Come già menzionato esistono parecchie varianti del problema VRP nelle quali cambiano, o si aggiungono, vincoli di capacità, tempo, punti di partenza, numero di viaggi, etc. La variante del problema implementata in questo progetto può essere considerata come una sotto-variante del CVRPTW (i.e. /Capacitated Vehicle Routing Problem with Time Windows/) nella quale i veicoli hanno una capacità limitata e sono presenti vincoli di tempo per la consegna.
 ** Modellazione del problema
-Esistono alcune modellazioni del problema - nelle sezioni successive ne vengono descritte due tra le più conosciute: la modellazione compatta, con un numero di variabili e vincoli polinomiale e la modellazione estesa, ovvero con variabili e vincoli in numero esponenziale.
+Esistono diverse modellazioni del problema - nelle sezioni successive ne vengono descritte due tra le più conosciute: la modellazione compatta, con un numero di variabili e vincoli polinomiale e la modellazione estesa, ovvero con variabili e vincoli in numero esponenziale.
 *** Modello CVRP
 Una possibile formulazione del problema CVRP tramite ILP è la seguente:
 \begin{align}
@@ -42,7 +42,7 @@ La modellazione del CVRPTW prevede gli stessi vincoli del CVRP con l'aggiunta de
 Allora i vincoli addizionali sono:
 \begin{align}
 a_i \leq s_{ik} \leq b_i \\
-s_{ik} + t_{ij} - M(1 - x{ijk}) \leq s_{jk}
+s_{ik} + t_{ij} - M(1 - x_{ijk}) \leq s_{jk}
 \end{align}
 Essi garantiscono il rispetto delle time windows (vincolo $(7)$) e la consecutività dei tempi di arrivo nei nodi (vincolo $(8)$).
 *** Modello esteso CVRPTW
@@ -176,7 +176,7 @@ y'_{i,k} = min(Mw_{i,k}\mbox{, } y_{i,k})
 \end{equation}
 ** Note
 - $M$, detta big-M, è una costante dal valore tendente a $+\infty$
-- $A$ è una matrice che rappresenta quali archi vengono percorsi da quale bus. È formata da 3 elementi (arco$_i$, arco$_j$, bus). La notazione $A(-,j,k)$ indica gli archi con arco $i$ fisso e $j,k$ non fissi.
+- $A$ è una lista di tutte le possibili combinazioni di archi $(i, j)$ e bus. È formata da 3 elementi (nodo$_i$, nodo$_j$, bus). La notazione $A(-,j,k)$ indica gli archi con nodo $i$ fisso, nodo $j$ non fisso e $k$ non fisso.
 * Euristiche e metaeuristiche
 ** Euristica costruttiva
 Per generare una prima semplice soluzione accettabile sono stati testati tre differenti algoritmi greedy:
