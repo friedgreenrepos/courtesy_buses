@@ -10,7 +10,7 @@ Every customer asks to be taken home after a certain time (i.e. a time window lo
 GOAL: take all customers home. Optimise the cost of the route and the customers' satisfaction.
 
 ## Requirements
-Create virtual environment and run `pip install -r requirements.txt`. The packages needed to run 
+Create and activate virtual environment and run `pip install -r requirements.txt`. The packages needed to run 
 the application are the following:
 - gurobipy (needs licence)
 - matplotlib
@@ -23,4 +23,4 @@ main.py [-h] [-d] [-v] [-H HEURISTIC] [-t MAXTIME] [-m]
                [-o KEY=VALUE [KEY=VALUE ...]]
                model [solution]
 ```
-Launch `main.py -h` for a better understanding of arguments.  
+Launch `main.py -h` for a better understanding of syntax. See `tesh.sh` for use cases.
